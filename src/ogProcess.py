@@ -2,8 +2,6 @@ import threading
 import platform
 import time
 
-print(platform.system())
-
 if platform.system() == 'Linux':
 	from linux import ogOperations
 
