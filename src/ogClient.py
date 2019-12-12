@@ -2,9 +2,8 @@ import errno
 import select
 import socket
 import time
-import httplib
-from mimetools import Message
-from StringIO import StringIO
+
+from HTTPParser import *
 from enum import Enum
 
 class State(Enum):
@@ -66,8 +65,8 @@ class ogClient:
 			self.sock.close()
 			self.connect()
 
-		print "received " + data
 		self.data = self.data + data
+		httpparser = HTTPParser()
 
 		if not self.trailer:
 			if self.data.find("\r\n") > 0:
@@ -75,18 +74,13 @@ class ogClient:
 				request_line, headers_alone = self.data.split('\n', 1)
 				headers = Message(StringIO(headers_alone))
 
-				print "DEBUG: \r\n trailer received"
-				print "DEBUG: HTTP keys are " + str(headers.keys())
-
 				if 'content-length' in headers.keys():
 					self.content_len = int(headers['content-length'])
 
 				self.trailer = True
 
 		if self.trailer and len(self.data) >= self.content_len:
-			#
-			# TODO: handle request here
-			#
+			httpparser.parser(self.data)
 
 			self.sock.send("HTTP/1.0 200 OK\r\n\r\n")
 
@@ -94,4 +88,3 @@ class ogClient:
 			self.data = ""
 			self.content_len = 0
 			self.trailer = False
-			print "DEBUG: request has been processed!"
