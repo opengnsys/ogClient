@@ -15,6 +15,8 @@ class ogProcess():
 		elif ("reboot" in URI):
 			self.process_reboot()
 			return 1
+		elif ("probe" in URI):
+			return 1
 
 		return 0
 
