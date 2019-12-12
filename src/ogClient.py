@@ -85,9 +85,10 @@ class ogClient:
 			httpparser.parser(self.data)
 			print httpparser.getRequestOP()
 			print httpparser.getURI()
-			ogprocess.processOperation(httpparser.getRequestOP(), httpparser.getURI())
-
-			self.sock.send("HTTP/1.0 200 OK\r\n\r\n")
+			if not ogprocess.processOperation(httpparser.getRequestOP(), httpparser.getURI()):
+				self.sock.send("HTTP/1.0 400 Bad request\r\n\r\n")
+			else:
+				self.sock.send("HTTP/1.0 200 OK\r\n\r\n")
 
 			# Cleanup state information from request
 			self.data = ""
