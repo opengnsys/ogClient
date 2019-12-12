@@ -93,3 +93,23 @@ class ogClient:
 			self.data = ""
 			self.content_len = 0
 			self.trailer = False
+
+	def run(self):
+		while 1:
+			sock = self.get_socket()
+			state = self.get_state()
+
+			if state == State.CONNECTING:
+				readset = [ sock ]
+				writeset = [ sock ]
+			else:
+				readset = [ sock ]
+				writeset = [ ]
+
+			readable, writable, exception = select.select(readset, writeset, [ ])
+			if state == State.CONNECTING and sock in writable:
+				self.connect2()
+			elif state == State.RECEIVING and sock in readable:
+				self.receive()
+			else:
+				print "bad state" + str(state)

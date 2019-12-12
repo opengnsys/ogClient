@@ -12,25 +12,7 @@ def main():
 
 	client = ogClient(ip, int(port))
 	client.connect()
-
-	while 1:
-		sock = client.get_socket()
-		state = client.get_state()
-
-		if state == State.CONNECTING:
-			readset = [ sock ]
-			writeset = [ sock ]
-		else:
-			readset = [ sock ]
-			writeset = [ ]
-
-		readable, writable, exception = select.select(readset, writeset, [ ])
-		if state == State.CONNECTING and sock in writable:
-			client.connect2()
-		elif state == State.RECEIVING and sock in readable:
-			client.receive()
-		else:
-			print "bad state" + str(state)
+	client.run()
 
 if __name__ == "__main__":
 	main()
