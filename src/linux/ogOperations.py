@@ -1,0 +1,3 @@
+def poweroff():
+	print 'APAGADO'
+
