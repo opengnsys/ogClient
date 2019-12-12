@@ -11,6 +11,14 @@ class ogProcess():
 	def processOperation(self, op, URI):
 		if ("poweroff" in URI):
 			self.process_poweroff()
+		elif ("reboot" in URI):
+			self.process_reboot()
+
+	def process_reboot(self):
+		# Rebooting thread
+		def rebt():
+			ogOperations.reboot()
+		threading.Thread(target=rebt).start()
 
 	def process_poweroff(self):
 		# Powering off thread
