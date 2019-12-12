@@ -5,9 +5,11 @@ import time
 import httplib
 from mimetools import Message
 from StringIO import StringIO
+from enum import Enum
 
-CONNECTING = 0
-RECEIVING = 1
+class State(Enum):
+	CONNECTING = 0
+	RECEIVING = 1
 
 class ogClient:
 	def __init__(self, ip, port):
@@ -24,7 +26,7 @@ class ogClient:
 		print "connecting"
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sock.setblocking(0)
-		self.state = CONNECTING
+		self.state = State.CONNECTING
 		self.data = ""
 		self.trailer = False
 		self.content_len = 0
@@ -45,10 +47,10 @@ class ogClient:
 		except socket.error, err:
 			if err.errno == errno.EISCONN:
 				print "connected"
-				self.state = RECEIVING
+				self.state = State.RECEIVING
 			else:
 				print "connection refused, retrying..."
-				self.state = CONNECTING
+				self.state = State.CONNECTING
 				self.sock.close()
 				self.connect()
 
@@ -60,7 +62,7 @@ class ogClient:
 			print "Error3 " + str(err)
 
 		if len(data) == 0:
-			self.state = CONNECTING
+			self.state = State.CONNECTING
 			self.sock.close()
 			self.connect()
 

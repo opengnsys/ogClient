@@ -1,9 +1,6 @@
 from src.ogClient import *
 from src.ogConfig import *
 
-CONNECTING = 0
-RECEIVING = 1
-
 def main():
 	ogconfig = ogConfig()
 	if (not ogconfig.parserFile('cfg/ogagent.cfg')):
@@ -20,7 +17,7 @@ def main():
 		sock = client.get_socket()
 		state = client.get_state()
 
-		if state == CONNECTING:
+		if state == State.CONNECTING:
 			readset = [ sock ]
 			writeset = [ sock ]
 		else:
@@ -28,9 +25,9 @@ def main():
 			writeset = [ ]
 
 		readable, writable, exception = select.select(readset, writeset, [ ])
-		if state == CONNECTING and sock in writable:
+		if state == State.CONNECTING and sock in writable:
 			client.connect2()
-		elif state == RECEIVING and sock in readable:
+		elif state == State.RECEIVING and sock in readable:
 			client.receive()
 		else:
 			print "bad state" + str(state)
