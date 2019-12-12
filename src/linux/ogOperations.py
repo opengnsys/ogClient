@@ -8,5 +8,7 @@ def poweroff():
 		subprocess.call(['/sbin/poweroff'])
 
 def reboot():
-	print 'REBOOT'
-
+	if os.path.exists('/scripts/oginit'):
+		subprocess.call('source /opt/opengnsys/etc/preinit/loadenviron.sh; /opt/opengnsys/scripts/reboot', shell=True)
+	else:
+		subprocess.call(['/sbin/reboot'])
