@@ -55,7 +55,6 @@ class ogClient:
 				self.connect()
 
 	def receive(self):
-		print "receiving"
 		try:
 			data = self.sock.recv(1024)
 		except socket.err, err:
@@ -83,8 +82,6 @@ class ogClient:
 
 		if self.trailer and len(self.data) >= self.content_len:
 			httpparser.parser(self.data)
-			print httpparser.getRequestOP()
-			print httpparser.getURI()
 			if not ogprocess.processOperation(httpparser.getRequestOP(), httpparser.getURI()):
 				self.sock.send("HTTP/1.0 400 Bad request\r\n\r\n")
 			else:
