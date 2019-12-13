@@ -1,5 +1,5 @@
-from mimetools import Message
-from StringIO import StringIO
+import email
+from io import StringIO
 
 class HTTPParser:
 	def __init__(self):
@@ -14,7 +14,7 @@ class HTTPParser:
 
 	def parser(self,data):
 		self.requestLine, self.headersAlone = data.split('\n', 1)
-		self.headers = Message(StringIO(self.headersAlone))
+		self.headers = email.message_from_file(StringIO(self.headersAlone))
 
 		if 'host' in self.headers.keys():
 			self.host = self.headers['host']

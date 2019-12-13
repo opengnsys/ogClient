@@ -3,7 +3,7 @@ import platform
 import time
 
 if platform.system() == 'Linux':
-	from linux import ogOperations
+	from src.linux import ogOperations
 
 class ogProcess():
 	def processOperation(self, op, URI):

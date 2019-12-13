@@ -4,7 +4,7 @@ from src.ogConfig import *
 def main():
 	ogconfig = ogConfig()
 	if (not ogconfig.parserFile('cfg/ogagent.cfg')):
-		print 'Error: Parsing configuration file'
+		print ('Error: Parsing configuration file')
 		return 0
 
 	ip = ogconfig.getValueSection('opengnsys', 'ip')
