@@ -12,6 +12,7 @@ from enum import Enum
 class State(Enum):
 	CONNECTING = 0
 	RECEIVING = 1
+	FORCE_DISCONNECTED = 2
 
 class ogClient:
 	def __init__(self, ip, port):
@@ -84,10 +85,8 @@ class ogClient:
 
 		if self.trailer and len(self.data) >= self.content_len:
 			httpparser.parser(self.data)
-			if not ogprocess.processOperation(httpparser.getRequestOP(), httpparser.getURI()):
-				self.sock.send(bytes('HTTP/1.0 400 Bad request\r\n\r\n', 'utf-8'))
-			else:
-				self.sock.send(bytes('HTTP/1.0 200 OK\r\n\r\n', 'utf-8'))
+			if not ogprocess.processOperation(httpparser.getRequestOP(), httpparser.getURI(), self.sock):
+				self.state = State.FORCE_DISCONNECTED
 
 			# Cleanup state information from request
 			self.data = ""
@@ -102,6 +101,8 @@ class ogClient:
 			if state == State.CONNECTING:
 				readset = [ sock ]
 				writeset = [ sock ]
+			elif state == State.FORCE_DISCONNECTED:
+				return 0
 			else:
 				readset = [ sock ]
 				writeset = [ ]
