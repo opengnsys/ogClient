@@ -44,6 +44,10 @@ class ogClient:
 
 			print ('Error connect ' + str(err))
 
+	def send(self, msg):
+		self.sock.send(bytes(msg, 'utf-8'))
+		return len(msg)
+
 	def connect2(self):
 		try:
 			self.sock.connect((self.ip, self.port))
@@ -85,13 +89,16 @@ class ogClient:
 
 		if self.trailer and len(self.data) >= self.content_len:
 			httpparser.parser(self.data)
-			if not ogprocess.processOperation(httpparser.getRequestOP(), httpparser.getURI(), self.sock):
-				self.state = State.FORCE_DISCONNECTED
+			ogprocess.processOperation(httpparser.getRequestOP(), httpparser.getURI(), self)
 
 			# Cleanup state information from request
 			self.data = ""
 			self.content_len = 0
 			self.trailer = False
+
+	def disconnect(self):
+		self.state = State.FORCE_DISCONNECTED
+		self.sock.close()
 
 	def run(self):
 		while 1:
