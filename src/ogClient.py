@@ -6,7 +6,7 @@ import email
 from io import StringIO
 
 from src.HTTPParser import *
-from src.ogProcess import *
+from src.ogRest import *
 from enum import Enum
 
 class State(Enum):
@@ -74,7 +74,7 @@ class ogClient:
 
 		self.data = self.data + data
 		httpparser = HTTPParser()
-		ogprocess = ogProcess()
+		ogrest = ogRest()
 
 		if not self.trailer:
 			if self.data.find("\r\n") > 0:
@@ -89,7 +89,7 @@ class ogClient:
 
 		if self.trailer and len(self.data) >= self.content_len:
 			httpparser.parser(self.data)
-			ogprocess.processOperation(httpparser.getRequestOP(), httpparser.getURI(), self)
+			ogrest.processOperation(httpparser.getRequestOP(), httpparser.getURI(), self)
 
 			# Cleanup state information from request
 			self.data = ""
