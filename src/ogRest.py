@@ -8,6 +8,20 @@ import queue
 if platform.system() == 'Linux':
 	from src.linux import ogOperations
 
+class ogThread():
+	# Executing cmd thread
+	def execcmd(msgqueue, cmd):
+		msgqueue.put(ogOperations.execCMD(cmd))
+
+	# Powering off thread
+	def pwoff():
+		time.sleep(2)
+		ogOperations.poweroff()
+
+	# Rebooting thread
+	def rebt():
+		ogOperations.reboot()
+
 class ogResponses(Enum):
 	BAD_REQUEST=0
 	IN_PROGRESS=1
@@ -64,37 +78,24 @@ class ogRest():
 		return 0
 
 	def process_reboot(self, client):
-		# Rebooting thread
-		def rebt():
-			ogOperations.reboot()
-
 		client.send(self.getResponse(ogResponses.IN_PROGRESS))
 		client.disconnect()
-		threading.Thread(target=rebt).start()
+		threading.Thread(target=ogThread.rebt).start()
 
 	def process_poweroff(self, client):
-		# Powering off thread
-		def pwoff():
-			time.sleep(2)
-			ogOperations.poweroff()
-
 		client.send(self.getResponse(ogResponses.IN_PROGRESS))
 		client.disconnect()
-		threading.Thread(target=pwoff).start()
+		threading.Thread(target=ogThread.pwoff).start()
 
 	def process_probe(self, client):
 		client.send(self.getResponse(ogResponses.OK))
 
 	def process_shellrun(self, client, cmd):
-		# Executing cmd thread
-		def execcmd(msgqueue):
-			msgqueue.put(ogOperations.execCMD(cmd))
-
 		if cmd == None:
 			client.send(self.getResponse(ogResponses.BAD_REQUEST))
 			return
 
-		threading.Thread(target=execcmd, args=(self.msgqueue,)).start()
+		threading.Thread(target=ogThread.execcmd, args=(self.msgqueue, cmd,)).start()
 		client.send(self.getResponse(ogResponses.IN_PROGRESS))
 
 	def process_shellout(self, client):
