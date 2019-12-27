@@ -2,6 +2,8 @@ import threading
 import platform
 import time
 from enum import Enum
+import json
+import queue
 
 if platform.system() == 'Linux':
 	from src.linux import ogOperations
@@ -12,21 +14,44 @@ class ogResponses(Enum):
 	OK=2
 
 class ogRest():
-	def getResponse(self, response):
-		if response == ogResponses.BAD_REQUEST:
-			return 'HTTP/1.0 400 Bad request\r\n\r\n'
-		if response == ogResponses.IN_PROGRESS:
-			return 'HTTP/1.0 202 Accepted\r\n\r\n'
-		if response == ogResponses.OK:
-			return 'HTTP/1.0 200 OK\r\n\r\n'
+	def __init__(self):
+		self.msgqueue = queue.Queue(1000)
 
-	def processOperation(self, op, URI, client):
+	def buildJsonResponse(self, idstr, content):
+		data = { idstr :content }
+		return json.dumps(data)
+
+	def getResponse(self, response, idstr=None, content=None):
+		msg = ''
+		if response == ogResponses.BAD_REQUEST:
+			msg = 'HTTP/1.0 400 Bad request'
+		elif response == ogResponses.IN_PROGRESS:
+			msg = 'HTTP/1.0 202 Accepted'
+		elif response == ogResponses.OK:
+			msg = 'HTTP/1.0 200 OK'
+		else:
+			return msg
+
+		if not content == None:
+			jsonmsg = self.buildJsonResponse(idstr, content)
+			msg = msg + '\nContent-Type:application/json'
+			msg = msg + '\nContent-Length:' + str(len(jsonmsg))
+			msg = msg + '\n' + jsonmsg
+
+		msg = msg + '\r\n\r\n'
+		return msg
+
+	def processOperation(self, op, URI, cmd, client):
 		if ("poweroff" in URI):
 			self.process_poweroff(client)
 		elif ("reboot" in URI):
 			self.process_reboot(client)
 		elif ("probe" in URI):
 			self.process_probe(client)
+		elif ("shell/run" in URI):
+			self.process_shellrun(client, cmd)
+		elif ("shell/output" in URI):
+			self.process_shellout(client)
 		else:
 			client.send(self.getResponse(ogResponses.BAD_REQUEST))
 
@@ -53,3 +78,18 @@ class ogRest():
 
 	def process_probe(self, client):
 		client.send(self.getResponse(ogResponses.OK))
+
+	def process_shellrun(self, client, cmd):
+		if cmd == None:
+			client.send(self.getResponse(ogResponses.BAD_REQUEST))
+			return
+
+		self.msgqueue.put(ogOperations.execCMD(cmd))
+		client.send(self.getResponse(ogResponses.IN_PROGRESS))
+
+	def process_shellout(self, client):
+		if self.msgqueue.empty():
+			client.send(self.getResponse(ogResponses.IN_PROGRESS, 'out', ''))
+		else:
+			out = self.msgqueue.get()
+			client.send(self.getResponse(ogResponses.IN_PROGRESS, 'out', out))

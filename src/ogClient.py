@@ -18,6 +18,7 @@ class ogClient:
 	def __init__(self, ip, port):
 		self.ip = ip
 		self.port = port
+		self.ogrest = ogRest()
 
 	def get_socket(self):
 		return self.sock
@@ -74,7 +75,6 @@ class ogClient:
 
 		self.data = self.data + data
 		httpparser = HTTPParser()
-		ogrest = ogRest()
 
 		if not self.trailer:
 			if self.data.find("\r\n") > 0:
@@ -89,7 +89,7 @@ class ogClient:
 
 		if self.trailer and len(self.data) >= self.content_len:
 			httpparser.parser(self.data)
-			ogrest.processOperation(httpparser.getRequestOP(), httpparser.getURI(), self)
+			self.ogrest.processOperation(httpparser.getRequestOP(), httpparser.getURI(), httpparser.getCMD(), self)
 
 			# Cleanup state information from request
 			self.data = ""

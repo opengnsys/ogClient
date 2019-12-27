@@ -14,3 +14,8 @@ def reboot():
 		subprocess.call('source ' + OG_SCRIPT_PATH + 'etc/preinit/loadenviron.sh; ' + OG_SCRIPT_PATH + 'scripts/reboot', shell=True)
 	else:
 		subprocess.call(['/sbin/reboot'])
+
+def execCMD(cmd):
+	cmds = cmd.split(" ")
+	result = subprocess.run(cmds, stdout=subprocess.PIPE)
+	return result.stdout.decode('utf-8')

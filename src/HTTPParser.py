@@ -1,5 +1,6 @@
 import email
 from io import StringIO
+import json
 
 class HTTPParser:
 	def __init__(self):
@@ -11,23 +12,31 @@ class HTTPParser:
 		self.contentLen = None
 		self.operation = None
 		self.URI = None
+		self.cmd = None
 
 	def parser(self,data):
 		self.requestLine, self.headersAlone = data.split('\n', 1)
 		self.headers = email.message_from_file(StringIO(self.headersAlone))
 
-		if 'host' in self.headers.keys():
-			self.host = self.headers['host']
+		if 'Host' in self.headers.keys():
+			self.host = self.headers['Host']
 
-		if 'content-type' in self.headers.keys():
-			self.contentType = self.headers['content-type']
+		if 'Content-Type' in self.headers.keys():
+			self.contentType = self.headers['Content-Type']
 
-		if 'content-length' in self.headers.keys():
-			self.contentLen = int(self.headers['content-length'])
+		if 'Content-Length' in self.headers.keys():
+			self.contentLen = int(self.headers['Content-Length'])
 
 		if (not self.requestLine == None or not self.requestLine == ''):
 			self.operation = self.requestLine.split('/', 1)[0]
 			self.URI = self.requestLine.split('/', 1)[1]
+
+		if not self.contentLen == 0:
+			msgs = self.headersAlone.rstrip().split('\n')
+			cmd = msgs[len(msgs) - 1]
+			jsoncmd = json.loads(cmd)
+			if "run" in cmd:
+				self.cmd = jsoncmd["run"]
 
 	def getHeaderLine(self):
 		return self.headersAlone
@@ -52,3 +61,6 @@ class HTTPParser:
 
 	def getURI(self):
 		return self.URI
+
+	def getCMD(self):
+		return self.cmd
