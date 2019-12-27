@@ -34,7 +34,12 @@ class HTTPParser:
 		if not self.contentLen == 0:
 			msgs = self.headersAlone.rstrip().split('\n')
 			cmd = msgs[len(msgs) - 1]
-			jsoncmd = json.loads(cmd)
+			try:
+				jsoncmd = json.loads(cmd)
+			except ValueError as e:
+				print ("Error: Json message incomplete")
+				return
+
 			if "run" in cmd:
 				self.cmd = jsoncmd["run"]
 
