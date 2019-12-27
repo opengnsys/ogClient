@@ -86,11 +86,15 @@ class ogRest():
 		client.send(self.getResponse(ogResponses.OK))
 
 	def process_shellrun(self, client, cmd):
+		# Executing cmd thread
+		def execcmd(msgqueue):
+			msgqueue.put(ogOperations.execCMD(cmd))
+
 		if cmd == None:
 			client.send(self.getResponse(ogResponses.BAD_REQUEST))
 			return
 
-		self.msgqueue.put(ogOperations.execCMD(cmd))
+		threading.Thread(target=execcmd, args=(self.msgqueue,)).start()
 		client.send(self.getResponse(ogResponses.IN_PROGRESS))
 
 	def process_shellout(self, client):
