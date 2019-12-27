@@ -42,16 +42,22 @@ class ogRest():
 		return msg
 
 	def processOperation(self, op, URI, cmd, client):
-		if ("poweroff" in URI):
-			self.process_poweroff(client)
-		elif ("reboot" in URI):
-			self.process_reboot(client)
-		elif ("probe" in URI):
-			self.process_probe(client)
-		elif ("shell/run" in URI):
-			self.process_shellrun(client, cmd)
-		elif ("shell/output" in URI):
-			self.process_shellout(client)
+		if ("GET" in op):
+			if ("probe" in URI):
+				self.process_probe(client)
+			elif ("shell/output" in URI):
+				self.process_shellout(client)
+			else:
+				client.send(self.getResponse(ogResponses.BAD_REQUEST))
+		elif ("POST" in op):
+			if ("poweroff" in URI):
+				self.process_poweroff(client)
+			elif ("reboot" in URI):
+				self.process_reboot(client)
+			elif ("shell/run" in URI):
+				self.process_shellrun(client, cmd)
+			else:
+				client.send(self.getResponse(ogResponses.BAD_REQUEST))
 		else:
 			client.send(self.getResponse(ogResponses.BAD_REQUEST))
 
