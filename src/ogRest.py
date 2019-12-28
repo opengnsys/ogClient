@@ -15,12 +15,12 @@ class ogThread():
 		msgqueue.put(ogOperations.execCMD(cmd))
 
 	# Powering off thread
-	def pwoff():
+	def poweroff():
 		time.sleep(2)
 		ogOperations.poweroff()
 
 	# Rebooting thread
-	def rebt():
+	def reboot():
 		ogOperations.reboot()
 
 class ogResponses(Enum):
@@ -81,12 +81,12 @@ class ogRest():
 	def process_reboot(self, client):
 		client.send(self.getResponse(ogResponses.IN_PROGRESS))
 		client.disconnect()
-		threading.Thread(target=ogThread.rebt).start()
+		threading.Thread(target=ogThread.reboot).start()
 
 	def process_poweroff(self, client):
 		client.send(self.getResponse(ogResponses.IN_PROGRESS))
 		client.disconnect()
-		threading.Thread(target=ogThread.pwoff).start()
+		threading.Thread(target=ogThread.poweroff).start()
 
 	def process_probe(self, client):
 		client.send(self.getResponse(ogResponses.OK))
