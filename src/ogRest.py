@@ -11,6 +11,7 @@ if platform.system() == 'Linux':
 class ogThread():
 	# Executing cmd thread
 	def execcmd(msgqueue, cmd):
+		msgqueue.queue.clear()
 		msgqueue.put(ogOperations.execCMD(cmd))
 
 	# Powering off thread
@@ -95,12 +96,12 @@ class ogRest():
 			client.send(self.getResponse(ogResponses.BAD_REQUEST))
 			return
 
-		threading.Thread(target=ogThread.execcmd, args=(self.msgqueue, cmd,)).start()
-		client.send(self.getResponse(ogResponses.IN_PROGRESS))
+		ogThread.execcmd(self.msgqueue, cmd)
+		client.send(self.getResponse(ogResponses.OK))
 
 	def process_shellout(self, client):
 		if self.msgqueue.empty():
-			client.send(self.getResponse(ogResponses.IN_PROGRESS, 'out', ''))
+			client.send(self.getResponse(ogResponses.OK, 'out', ''))
 		else:
 			out = self.msgqueue.get()
-			client.send(self.getResponse(ogResponses.IN_PROGRESS, 'out', out))
+			client.send(self.getResponse(ogResponses.OK, 'out', out))
