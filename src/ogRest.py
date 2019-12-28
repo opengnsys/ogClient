@@ -96,7 +96,13 @@ class ogRest():
 			client.send(self.getResponse(ogResponses.BAD_REQUEST))
 			return
 
-		ogThread.execcmd(self.msgqueue, cmd)
+		try:
+			ogThread.execcmd(self.msgqueue, cmd)
+		except ValueError as err:
+			print(err.args[0])
+			client.send(self.getResponse(ogResponses.BAD_REQUEST))
+			return
+
 		client.send(self.getResponse(ogResponses.OK))
 
 	def process_shellout(self, client):

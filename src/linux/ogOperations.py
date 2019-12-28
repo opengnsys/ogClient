@@ -17,5 +17,9 @@ def reboot():
 
 def execCMD(cmd):
 	cmds = cmd.split(" ")
-	result = subprocess.run(cmds, stdout=subprocess.PIPE)
-	return result.stdout.decode('utf-8')
+	try:
+		result = subprocess.check_output(cmds)
+	except:
+		raise ValueError('Error: Incorrect command value')
+
+	return result.decode('utf-8')
