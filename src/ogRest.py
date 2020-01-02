@@ -40,6 +40,11 @@ class ogThread():
 		msgqueue.queue.clear()
 		msgqueue.put(ogOperations.procsession(disk, partition))
 
+	# Process software
+	def procsoftware(msgqueue, disk, partition, path):
+		msgqueue.queue.clear()
+		msgqueue.put(ogOperations.procsoftware(disk, partition, path))
+
 class ogResponses(Enum):
 	BAD_REQUEST=0
 	IN_PROGRESS=1
@@ -87,6 +92,8 @@ class ogRest():
 				self.process_shellrun(client, httpparser.getCMD())
 			elif ("session" in URI):
 				self.process_session(client, httpparser.getDisk(), httpparser.getPartition())
+			elif ("software" in URI):
+				self.process_software(client, httpparser.getDisk(), httpparser.getPartition())
 			else:
 				client.send(self.getResponse(ogResponses.BAD_REQUEST))
 		else:
@@ -132,4 +139,9 @@ class ogRest():
 
 	def process_session(self, client, disk, partition):
 		threading.Thread(target=ogThread.procsession, args=(self.msgqueue, disk, partition,)).start()
+		client.send(self.getResponse(ogResponses.OK))
+
+	def process_software(self, client, disk, partition):
+		path = '/tmp/CSft-' + client.ip + '-' + partition
+		threading.Thread(target=ogThread.procsoftware, args=(self.msgqueue, disk, partition, path,)).start()
 		client.send(self.getResponse(ogResponses.OK))

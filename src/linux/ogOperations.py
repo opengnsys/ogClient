@@ -27,3 +27,7 @@ def execCMD(cmd):
 def procsession(disk, partition):
 	result = subprocess.check_output([OG_PATH + 'interfaceAdm/IniciarSesion', disk, partition], shell=True)
 	return result.decode('utf-8')
+
+def procsoftware(disk, partition, path):
+	result = subprocess.check_output([OG_PATH + 'interfaceAdm/InventarioSoftware', disk, partition, path], shell=True)
+	return result.decode('utf-8')
