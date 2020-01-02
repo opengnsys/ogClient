@@ -88,6 +88,8 @@ class ogRest():
 				self.process_shellout(client)
 			elif ("hardware" in URI):
 				self.process_hardware(client)
+			elif ("run/schedule" in URI):
+				self.process_schedule(client)
 			else:
 				client.send(self.getResponse(ogResponses.BAD_REQUEST))
 		elif ("POST" in op):
@@ -156,4 +158,7 @@ class ogRest():
 	def process_hardware(self, client):
 		path = '/tmp/Chrd-' + client.ip
 		threading.Thread(target=ogThread.prochardware, args=(self.msgqueue, path,)).start()
+		client.send(self.getResponse(ogResponses.OK))
+
+	def process_schedule(self, client):
 		client.send(self.getResponse(ogResponses.OK))
