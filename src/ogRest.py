@@ -45,6 +45,11 @@ class ogThread():
 		msgqueue.queue.clear()
 		msgqueue.put(ogOperations.procsoftware(disk, partition, path))
 
+	# Process hardware
+	def prochardware(msgqueue, path):
+		msgqueue.queue.clear()
+		msgqueue.put(ogOperations.prochardware(path))
+
 class ogResponses(Enum):
 	BAD_REQUEST=0
 	IN_PROGRESS=1
@@ -81,6 +86,8 @@ class ogRest():
 				self.process_probe(client)
 			elif ("shell/output" in URI):
 				self.process_shellout(client)
+			elif ("hardware" in URI):
+				self.process_hardware(client)
 			else:
 				client.send(self.getResponse(ogResponses.BAD_REQUEST))
 		elif ("POST" in op):
@@ -144,4 +151,9 @@ class ogRest():
 	def process_software(self, client, disk, partition):
 		path = '/tmp/CSft-' + client.ip + '-' + partition
 		threading.Thread(target=ogThread.procsoftware, args=(self.msgqueue, disk, partition, path,)).start()
+		client.send(self.getResponse(ogResponses.OK))
+
+	def process_hardware(self, client):
+		path = '/tmp/Chrd-' + client.ip
+		threading.Thread(target=ogThread.prochardware, args=(self.msgqueue, path,)).start()
 		client.send(self.getResponse(ogResponses.OK))

@@ -31,3 +31,7 @@ def procsession(disk, partition):
 def procsoftware(disk, partition, path):
 	result = subprocess.check_output([OG_PATH + 'interfaceAdm/InventarioSoftware', disk, partition, path], shell=True)
 	return result.decode('utf-8')
+
+def prochardware(path):
+	result = subprocess.check_output([OG_PATH + 'interfaceAdm/InventarioHardware', path], shell=True)
+	return result.decode('utf-8')
