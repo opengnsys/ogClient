@@ -8,6 +8,16 @@ import queue
 if platform.system() == 'Linux':
 	from src.linux import ogOperations
 
+class jsonResponse():
+	def __init__(self):
+		self.jsontree = {}
+
+	def addElement(self, key, value):
+		self.jsontree[key] = value
+
+	def dumpMsg(self):
+		return json.dumps(self.jsontree)
+
 class ogThread():
 	# Executing cmd thread
 	def execcmd(msgqueue, cmd):
@@ -32,11 +42,7 @@ class ogRest():
 	def __init__(self):
 		self.msgqueue = queue.Queue(1000)
 
-	def buildJsonResponse(self, idstr, content):
-		data = { idstr :content }
-		return json.dumps(data)
-
-	def getResponse(self, response, idstr=None, content=None):
+	def getResponse(self, response, jsonResp=None):
 		msg = ''
 		if response == ogResponses.BAD_REQUEST:
 			msg = 'HTTP/1.0 400 Bad request'
@@ -47,11 +53,10 @@ class ogRest():
 		else:
 			return msg
 
-		if not content == None:
-			jsonmsg = self.buildJsonResponse(idstr, content)
+		if not jsonResp == None:
 			msg = msg + '\nContent-Type:application/json'
-			msg = msg + '\nContent-Length:' + str(len(jsonmsg))
-			msg = msg + '\n' + jsonmsg
+			msg = msg + '\nContent-Length:' + str(len(jsonResp.dumpMsg()))
+			msg = msg + '\n' + jsonResp.dumpMsg()
 
 		msg = msg + '\r\n\r\n'
 		return msg
@@ -106,8 +111,10 @@ class ogRest():
 		client.send(self.getResponse(ogResponses.OK))
 
 	def process_shellout(self, client):
+		jsonResp = jsonResponse()
 		if self.msgqueue.empty():
-			client.send(self.getResponse(ogResponses.OK, 'out', ''))
+			jsonResp.addElement('out', '')
+			client.send(self.getResponse(ogResponses.OK, jsonResp))
 		else:
-			out = self.msgqueue.get()
-			client.send(self.getResponse(ogResponses.OK, 'out', out))
+			jsonResp.addElement('out', self.msgqueue.get())
+			client.send(self.getResponse(ogResponses.OK, jsonResp))
