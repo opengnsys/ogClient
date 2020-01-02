@@ -35,3 +35,8 @@ def procsoftware(disk, partition, path):
 def prochardware(path):
 	result = subprocess.check_output([OG_PATH + 'interfaceAdm/InventarioHardware', path], shell=True)
 	return result.decode('utf-8')
+
+def procsetup(disk, cache, cachesize, partlist):
+	for part in partlist:
+		cfg = 'dis=' + disk + '*che=' + cache + '*tch=' + cachesize + '!par=' + part["partition"] + '*cpt='+part["code"] + '*sfi=' + part['filesystem'] + '*tam=' + part['size'] + '*ope=' + part['format'] + '%'
+		subprocess.check_output([OG_PATH + 'interfaceAdm/Configurar', disk, cfg], shell=True)

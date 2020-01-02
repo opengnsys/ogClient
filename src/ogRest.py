@@ -50,6 +50,10 @@ class ogThread():
 		msgqueue.queue.clear()
 		msgqueue.put(ogOperations.prochardware(path))
 
+	# Process setup
+	def procsetup(msgqueue, disk, cache, cachesize, partlist):
+		ogOperations.procsetup(disk, cache, cachesize, partlist)
+
 class ogResponses(Enum):
 	BAD_REQUEST=0
 	IN_PROGRESS=1
@@ -103,6 +107,8 @@ class ogRest():
 				self.process_session(client, httpparser.getDisk(), httpparser.getPartition())
 			elif ("software" in URI):
 				self.process_software(client, httpparser.getDisk(), httpparser.getPartition())
+			elif ("setup" in URI):
+				self.process_setup(client, httpparser.getDisk(), httpparser.getCache(), httpparser.getCacheSize(), httpparser.getPartitionSetup())
 			else:
 				client.send(self.getResponse(ogResponses.BAD_REQUEST))
 		else:
@@ -161,4 +167,8 @@ class ogRest():
 		client.send(self.getResponse(ogResponses.OK))
 
 	def process_schedule(self, client):
+		client.send(self.getResponse(ogResponses.OK))
+
+	def process_setup(self, client, disk, cache, cachesize, partlist):
+		threading.Thread(target=ogThread.procsetup, args=(self.msgqueue, disk, cache, cachesize, partlist,)).start()
 		client.send(self.getResponse(ogResponses.OK))

@@ -15,6 +15,9 @@ class HTTPParser:
 		self.cmd = None
 		self.partition = None
 		self.disk = None
+		self.cache = None
+		self.cache_size = None
+		self.partition_setup = None
 
 	def parser(self,data):
 		self.requestLine, self.headersAlone = data.split('\n', 1)
@@ -49,7 +52,17 @@ class HTTPParser:
 				self.disk = jsoncmd["disk"]
 
 			if "partition" in cmd:
-				self.partition = jsoncmd["partition"]
+				if not "partition_setup" in cmd:
+					self.partition = jsoncmd["partition"]
+
+			if "cache" in cmd:
+				self.cache = jsoncmd["cache"]
+
+			if "cache_size" in cmd:
+				self.cache_size = jsoncmd["cache_size"]
+
+			if "partition_setup" in cmd:
+				self.partition_setup = jsoncmd["partition_setup"]
 
 	def getHeaderLine(self):
 		return self.headersAlone
@@ -83,3 +96,12 @@ class HTTPParser:
 
 	def getPartition(self):
 		return self.partition
+
+	def getCache(self):
+		return self.cache
+
+	def getCacheSize(self):
+		return self.cache_size
+
+	def getPartitionSetup(self):
+		return self.partition_setup
