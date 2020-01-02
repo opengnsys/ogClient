@@ -13,6 +13,8 @@ class HTTPParser:
 		self.operation = None
 		self.URI = None
 		self.cmd = None
+		self.partition = None
+		self.disk = None
 
 	def parser(self,data):
 		self.requestLine, self.headersAlone = data.split('\n', 1)
@@ -43,6 +45,12 @@ class HTTPParser:
 			if "run" in cmd:
 				self.cmd = jsoncmd["run"]
 
+			if "disk" in cmd:
+				self.disk = jsoncmd["disk"]
+
+			if "partition" in cmd:
+				self.partition = jsoncmd["partition"]
+
 	def getHeaderLine(self):
 		return self.headersAlone
 
@@ -69,3 +77,9 @@ class HTTPParser:
 
 	def getCMD(self):
 		return self.cmd
+
+	def getDisk(self):
+		return self.disk
+
+	def getPartition(self):
+		return self.partition

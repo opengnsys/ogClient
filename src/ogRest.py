@@ -5,6 +5,8 @@ from enum import Enum
 import json
 import queue
 
+from src.HTTPParser import *
+
 if platform.system() == 'Linux':
 	from src.linux import ogOperations
 
@@ -32,6 +34,11 @@ class ogThread():
 	# Rebooting thread
 	def reboot():
 		ogOperations.reboot()
+
+	# Process session
+	def procsession(msgqueue, disk, partition):
+		msgqueue.queue.clear()
+		msgqueue.put(ogOperations.procsession(disk, partition))
 
 class ogResponses(Enum):
 	BAD_REQUEST=0
@@ -61,7 +68,9 @@ class ogRest():
 		msg = msg + '\r\n\r\n'
 		return msg
 
-	def processOperation(self, op, URI, cmd, client):
+	def processOperation(self, httpparser, client):
+		op = httpparser.getRequestOP()
+		URI = httpparser.getURI()
 		if ("GET" in op):
 			if ("probe" in URI):
 				self.process_probe(client)
@@ -75,7 +84,9 @@ class ogRest():
 			elif ("reboot" in URI):
 				self.process_reboot(client)
 			elif ("shell/run" in URI):
-				self.process_shellrun(client, cmd)
+				self.process_shellrun(client, httpparser.getCMD())
+			elif ("session" in URI):
+				self.process_session(client, httpparser.getDisk(), httpparser.getPartition())
 			else:
 				client.send(self.getResponse(ogResponses.BAD_REQUEST))
 		else:
@@ -118,3 +129,7 @@ class ogRest():
 		else:
 			jsonResp.addElement('out', self.msgqueue.get())
 			client.send(self.getResponse(ogResponses.OK, jsonResp))
+
+	def process_session(self, client, disk, partition):
+		threading.Thread(target=ogThread.procsession, args=(self.msgqueue, disk, partition,)).start()
+		client.send(self.getResponse(ogResponses.OK))
