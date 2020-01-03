@@ -18,6 +18,11 @@ class HTTPParser:
 		self.cache = None
 		self.cache_size = None
 		self.partition_setup = None
+		self.name = None
+		self.repo = None
+		self.type = None
+		self.profile = None
+		self.id = None
 
 	def parser(self,data):
 		self.requestLine, self.headersAlone = data.split('\n', 1)
@@ -64,6 +69,21 @@ class HTTPParser:
 			if "partition_setup" in cmd:
 				self.partition_setup = jsoncmd["partition_setup"]
 
+			if "name" in cmd:
+				self.name = jsoncmd["name"]
+
+			if "repository" in cmd:
+				self.repo = jsoncmd["repository"]
+
+			if "type" in cmd:
+				self.type = jsoncmd["type"]
+
+			if "profile" in cmd:
+				self.profile = jsoncmd["profile"]
+
+			if "id" in cmd:
+				self.id = jsoncmd["id"]
+
 	def getHeaderLine(self):
 		return self.headersAlone
 
@@ -105,3 +125,18 @@ class HTTPParser:
 
 	def getPartitionSetup(self):
 		return self.partition_setup
+
+	def getName(self):
+		return self.name
+
+	def getRepo(self):
+		return self.repo
+
+	def getType(self):
+		return self.type
+
+	def getProfile(self):
+		return self.profile
+
+	def getId(self):
+		return self.id

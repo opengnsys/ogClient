@@ -54,6 +54,11 @@ class ogThread():
 	def procsetup(msgqueue, disk, cache, cachesize, partlist):
 		ogOperations.procsetup(disk, cache, cachesize, partlist)
 
+	# Process image restore
+	def procirestore(msgqueue, disk, partition, name, repo, ctype, profile, cid):
+		msgqueue.queue.clear()
+		msgqueue.put(ogOperations.procirestore(disk, partition, name, repo, ctype, profile, cid))
+
 class ogResponses(Enum):
 	BAD_REQUEST=0
 	IN_PROGRESS=1
@@ -109,6 +114,11 @@ class ogRest():
 				self.process_software(client, httpparser.getDisk(), httpparser.getPartition())
 			elif ("setup" in URI):
 				self.process_setup(client, httpparser.getDisk(), httpparser.getCache(), httpparser.getCacheSize(), httpparser.getPartitionSetup())
+			elif ("image/restore" in URI):
+				self.process_irestore(client, httpparser.getDisk(),
+						      httpparser.getPartition(), httpparser.getName(),
+						      httpparser.getRepo(), httpparser.getType(),
+						      httpparser.getProfile(), httpparser.getId())
 			else:
 				client.send(self.getResponse(ogResponses.BAD_REQUEST))
 		else:
@@ -171,4 +181,8 @@ class ogRest():
 
 	def process_setup(self, client, disk, cache, cachesize, partlist):
 		threading.Thread(target=ogThread.procsetup, args=(self.msgqueue, disk, cache, cachesize, partlist,)).start()
+		client.send(self.getResponse(ogResponses.OK))
+
+	def process_irestore(self, client, disk, partition, name, repo, ctype, profile, cid):
+		threading.Thread(target=ogThread.procirestore, args=(self.msgqueue, disk, partition, name, repo, ctype, profile, cid,)).start()
 		client.send(self.getResponse(ogResponses.OK))

@@ -40,3 +40,7 @@ def procsetup(disk, cache, cachesize, partlist):
 	for part in partlist:
 		cfg = 'dis=' + disk + '*che=' + cache + '*tch=' + cachesize + '!par=' + part["partition"] + '*cpt='+part["code"] + '*sfi=' + part['filesystem'] + '*tam=' + part['size'] + '*ope=' + part['format'] + '%'
 		subprocess.check_output([OG_PATH + 'interfaceAdm/Configurar', disk, cfg], shell=True)
+
+def procirestore(disk, partition, name, repo, ctype, profile, cid):
+	result = subprocess.check_output([OG_PATH + 'interfaceAdm/RestaurarImagen', disk, partition, name, repo, ctype], shell=True)
+	return result.decode('utf-8')
