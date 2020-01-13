@@ -106,9 +106,14 @@ class ogThread():
 		ogOperations.procsetup(httpparser)
 
 	# Process image restore
-	def procirestore(msgqueue, httpparser):
-		msgqueue.queue.clear()
-		msgqueue.put(ogOperations.procirestore(httpparser))
+	def procirestore(httpparser):
+		try:
+			ogOperations.procirestore(httpparser)
+		except ValueError as err:
+			client.send(restResponse.getResponse(ogResponses.INTERNAL_ERR))
+			return
+
+		client.send(restResponse.getResponse(ogResponses.OK))
 
 class ogResponses(Enum):
 	BAD_REQUEST=0
@@ -211,5 +216,4 @@ class ogRest():
 		client.send(restResponse.getResponse(ogResponses.OK))
 
 	def process_irestore(self, client, httpparser):
-		threading.Thread(target=ogThread.procirestore, args=(self.msgqueue, httpparser,)).start()
-		client.send(restResponse.getResponse(ogResponses.OK))
+		threading.Thread(target=ogThread.procirestore, args=(client, httpparser,)).start()

@@ -74,5 +74,9 @@ def procirestore(httpparser):
 	profile = httpparser.getProfile()
 	cid = httpparser.getId()
 
-	result = subprocess.check_output([OG_PATH + 'interfaceAdm/RestaurarImagen', disk, partition, name, repo, ctype], shell=True)
+	try:
+		result = subprocess.check_output([OG_PATH + 'interfaceAdm/RestaurarImagen', disk, partition, name, repo, ctype], shell=True)
+	except:
+		raise ValueError('Error: Incorrect command value')
+
 	return result.decode('utf-8')
