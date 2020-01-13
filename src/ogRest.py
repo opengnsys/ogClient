@@ -22,9 +22,9 @@ class jsonResponse():
 
 class ogThread():
 	# Executing cmd thread
-	def execcmd(msgqueue, cmd):
+	def execcmd(msgqueue, httpparser):
 		msgqueue.queue.clear()
-		msgqueue.put(ogOperations.execCMD(cmd))
+		msgqueue.put(ogOperations.execCMD(httpparser))
 
 	# Powering off thread
 	def poweroff():
@@ -36,14 +36,14 @@ class ogThread():
 		ogOperations.reboot()
 
 	# Process session
-	def procsession(msgqueue, disk, partition):
+	def procsession(msgqueue, httpparser):
 		msgqueue.queue.clear()
-		msgqueue.put(ogOperations.procsession(disk, partition))
+		msgqueue.put(ogOperations.procsession(httpparser))
 
 	# Process software
-	def procsoftware(msgqueue, disk, partition, path):
+	def procsoftware(msgqueue, httpparser, path):
 		msgqueue.queue.clear()
-		msgqueue.put(ogOperations.procsoftware(disk, partition, path))
+		msgqueue.put(ogOperations.procsoftware(httpparser, path))
 
 	# Process hardware
 	def prochardware(msgqueue, path):
@@ -51,13 +51,13 @@ class ogThread():
 		msgqueue.put(ogOperations.prochardware(path))
 
 	# Process setup
-	def procsetup(msgqueue, disk, cache, cachesize, partlist):
-		ogOperations.procsetup(disk, cache, cachesize, partlist)
+	def procsetup(msgqueue, httpparser):
+		ogOperations.procsetup(httpparser)
 
 	# Process image restore
-	def procirestore(msgqueue, disk, partition, name, repo, ctype, profile, cid):
+	def procirestore(msgqueue, httpparser):
 		msgqueue.queue.clear()
-		msgqueue.put(ogOperations.procirestore(disk, partition, name, repo, ctype, profile, cid))
+		msgqueue.put(ogOperations.procirestore(httpparser))
 
 class ogResponses(Enum):
 	BAD_REQUEST=0
@@ -107,18 +107,15 @@ class ogRest():
 			elif ("reboot" in URI):
 				self.process_reboot(client)
 			elif ("shell/run" in URI):
-				self.process_shellrun(client, httpparser.getCMD())
+				self.process_shellrun(client, httpparser)
 			elif ("session" in URI):
-				self.process_session(client, httpparser.getDisk(), httpparser.getPartition())
+				self.process_session(client, httpparser)
 			elif ("software" in URI):
-				self.process_software(client, httpparser.getDisk(), httpparser.getPartition())
+				self.process_software(client, httpparser)
 			elif ("setup" in URI):
-				self.process_setup(client, httpparser.getDisk(), httpparser.getCache(), httpparser.getCacheSize(), httpparser.getPartitionSetup())
+				self.process_setup(client, httpparser)
 			elif ("image/restore" in URI):
-				self.process_irestore(client, httpparser.getDisk(),
-						      httpparser.getPartition(), httpparser.getName(),
-						      httpparser.getRepo(), httpparser.getType(),
-						      httpparser.getProfile(), httpparser.getId())
+				self.process_irestore(client, httpparser)
 			else:
 				client.send(self.getResponse(ogResponses.BAD_REQUEST))
 		else:
@@ -139,13 +136,13 @@ class ogRest():
 	def process_probe(self, client):
 		client.send(self.getResponse(ogResponses.OK))
 
-	def process_shellrun(self, client, cmd):
-		if cmd == None:
+	def process_shellrun(self, client, httpparser):
+		if httpparser.getCMD() == None:
 			client.send(self.getResponse(ogResponses.BAD_REQUEST))
 			return
 
 		try:
-			ogThread.execcmd(self.msgqueue, cmd)
+			ogThread.execcmd(self.msgqueue, httpparser)
 		except ValueError as err:
 			print(err.args[0])
 			client.send(self.getResponse(ogResponses.BAD_REQUEST))
@@ -162,13 +159,13 @@ class ogRest():
 			jsonResp.addElement('out', self.msgqueue.get())
 			client.send(self.getResponse(ogResponses.OK, jsonResp))
 
-	def process_session(self, client, disk, partition):
-		threading.Thread(target=ogThread.procsession, args=(self.msgqueue, disk, partition,)).start()
+	def process_session(self, client, httpparser):
+		threading.Thread(target=ogThread.procsession, args=(self.msgqueue, httpparser,)).start()
 		client.send(self.getResponse(ogResponses.OK))
 
-	def process_software(self, client, disk, partition):
+	def process_software(self, client, httpparser):
 		path = '/tmp/CSft-' + client.ip + '-' + partition
-		threading.Thread(target=ogThread.procsoftware, args=(self.msgqueue, disk, partition, path,)).start()
+		threading.Thread(target=ogThread.procsoftware, args=(self.msgqueue, httpparser, path,)).start()
 		client.send(self.getResponse(ogResponses.OK))
 
 	def process_hardware(self, client):
@@ -179,10 +176,10 @@ class ogRest():
 	def process_schedule(self, client):
 		client.send(self.getResponse(ogResponses.OK))
 
-	def process_setup(self, client, disk, cache, cachesize, partlist):
-		threading.Thread(target=ogThread.procsetup, args=(self.msgqueue, disk, cache, cachesize, partlist,)).start()
+	def process_setup(self, client, httpparser):
+		threading.Thread(target=ogThread.procsetup, args=(self.msgqueue, httpparser,)).start()
 		client.send(self.getResponse(ogResponses.OK))
 
-	def process_irestore(self, client, disk, partition, name, repo, ctype, profile, cid):
-		threading.Thread(target=ogThread.procirestore, args=(self.msgqueue, disk, partition, name, repo, ctype, profile, cid,)).start()
+	def process_irestore(self, client, httpparser):
+		threading.Thread(target=ogThread.procirestore, args=(self.msgqueue, httpparser,)).start()
 		client.send(self.getResponse(ogResponses.OK))

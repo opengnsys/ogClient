@@ -15,7 +15,8 @@ def reboot():
 	else:
 		subprocess.call(['/sbin/reboot'])
 
-def execCMD(cmd):
+def execCMD(httpparser):
+	cmd = httpparser.getCMD()
 	cmds = cmd.split(" ")
 	try:
 		result = subprocess.check_output(cmds)
@@ -24,11 +25,17 @@ def execCMD(cmd):
 
 	return result.decode('utf-8')
 
-def procsession(disk, partition):
+def procsession(httpparser):
+	disk = httpparser.getDisk()
+	partition = httpparser.getPartition()
+
 	result = subprocess.check_output([OG_PATH + 'interfaceAdm/IniciarSesion', disk, partition], shell=True)
 	return result.decode('utf-8')
 
-def procsoftware(disk, partition, path):
+def procsoftware(httpparser, path):
+	disk = httpparser.getDisk()
+	partition = httpparser.getPartition()
+
 	result = subprocess.check_output([OG_PATH + 'interfaceAdm/InventarioSoftware', disk, partition, path], shell=True)
 	return result.decode('utf-8')
 
@@ -36,11 +43,24 @@ def prochardware(path):
 	result = subprocess.check_output([OG_PATH + 'interfaceAdm/InventarioHardware', path], shell=True)
 	return result.decode('utf-8')
 
-def procsetup(disk, cache, cachesize, partlist):
+def procsetup(httpparser):
+	disk = httpparser.getDisk()
+	cache = httpparser.getCache()
+	cachesize = httpparser.getCacheSize()
+	partlist = httpparser.getPartitionSetup()
+
 	for part in partlist:
 		cfg = 'dis=' + disk + '*che=' + cache + '*tch=' + cachesize + '!par=' + part["partition"] + '*cpt='+part["code"] + '*sfi=' + part['filesystem'] + '*tam=' + part['size'] + '*ope=' + part['format'] + '%'
 		subprocess.check_output([OG_PATH + 'interfaceAdm/Configurar', disk, cfg], shell=True)
 
-def procirestore(disk, partition, name, repo, ctype, profile, cid):
+def procirestore(httpparser):
+	disk = httpparser.getDisk()
+	partition = httpparser.getPartition()
+	name = httpparser.getName()
+	repo = httpparser.getRepo()
+	ctype = httpparser.getType()
+	profile = httpparser.getProfile()
+	cid = httpparser.getId()
+
 	result = subprocess.check_output([OG_PATH + 'interfaceAdm/RestaurarImagen', disk, partition, name, repo, ctype], shell=True)
 	return result.decode('utf-8')
