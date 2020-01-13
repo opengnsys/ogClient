@@ -87,9 +87,19 @@ class ogThread():
 		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
 	# Process hardware
-	def prochardware(msgqueue, path):
-		msgqueue.queue.clear()
-		msgqueue.put(ogOperations.prochardware(path))
+	def prochardware(client, path):
+		try:
+			ogOperations.prochardware(path)
+		except ValueError as err:
+			client.send(restResponse.getResponse(ogResponses.INTERNAL_ERR))
+			return
+
+		jsonResp = jsonResponse()
+		f = open(path, "r")
+		lines = f.readlines()
+		f.close()
+		jsonResp.addElement('hardware', lines[0])
+		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
 	# Process setup
 	def procsetup(msgqueue, httpparser):
@@ -191,8 +201,7 @@ class ogRest():
 
 	def process_hardware(self, client):
 		path = '/tmp/Chrd-' + client.ip
-		threading.Thread(target=ogThread.prochardware, args=(self.msgqueue, path,)).start()
-		client.send(restResponse.getResponse(ogResponses.OK))
+		threading.Thread(target=ogThread.prochardware, args=(client, path,)).start()
 
 	def process_schedule(self, client):
 		client.send(restResponse.getResponse(ogResponses.OK))

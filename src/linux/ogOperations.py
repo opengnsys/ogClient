@@ -48,7 +48,11 @@ def procsoftware(httpparser, path):
 	return result.decode('utf-8')
 
 def prochardware(path):
-	result = subprocess.check_output([OG_PATH + 'interfaceAdm/InventarioHardware', path], shell=True)
+	try:
+		result = subprocess.check_output([OG_PATH + 'interfaceAdm/InventarioHardware', path], shell=True)
+	except:
+		raise ValueError('Error: Incorrect command value')
+
 	return result.decode('utf-8')
 
 def procsetup(httpparser):
