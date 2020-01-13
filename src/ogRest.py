@@ -20,6 +20,28 @@ class jsonResponse():
 	def dumpMsg(self):
 		return json.dumps(self.jsontree)
 
+class restResponse():
+	def getResponse(response, jsonResp=None):
+		msg = ''
+		if response == ogResponses.BAD_REQUEST:
+			msg = 'HTTP/1.0 400 Bad request'
+		elif response == ogResponses.IN_PROGRESS:
+			msg = 'HTTP/1.0 202 Accepted'
+		elif response == ogResponses.OK:
+			msg = 'HTTP/1.0 200 OK'
+		elif response == ogResponses.INTERNAL_ERR:
+			msg = 'HTTP/1.0 500 Internal Server Error'
+		else:
+			return msg
+
+		if not jsonResp == None:
+			msg = msg + '\nContent-Type:application/json'
+			msg = msg + '\nContent-Length:' + str(len(jsonResp.dumpMsg()))
+			msg = msg + '\n' + jsonResp.dumpMsg()
+
+		msg = msg + '\r\n\r\n'
+		return msg
+
 class ogThread():
 	# Executing cmd thread
 	def execcmd(msgqueue, httpparser):
@@ -36,9 +58,14 @@ class ogThread():
 		ogOperations.reboot()
 
 	# Process session
-	def procsession(msgqueue, httpparser):
-		msgqueue.queue.clear()
-		msgqueue.put(ogOperations.procsession(httpparser))
+	def procsession(client, httpparser):
+		try:
+			ogOperations.procsession(httpparser)
+		except ValueError as err:
+			client.send(restResponse.getResponse(ogResponses.INTERNAL_ERR))
+			return
+
+		client.send(restResponse.getResponse(ogResponses.OK))
 
 	# Process software
 	def procsoftware(msgqueue, httpparser, path):
@@ -63,29 +90,11 @@ class ogResponses(Enum):
 	BAD_REQUEST=0
 	IN_PROGRESS=1
 	OK=2
+	INTERNAL_ERR=3
 
 class ogRest():
 	def __init__(self):
 		self.msgqueue = queue.Queue(1000)
-
-	def getResponse(self, response, jsonResp=None):
-		msg = ''
-		if response == ogResponses.BAD_REQUEST:
-			msg = 'HTTP/1.0 400 Bad request'
-		elif response == ogResponses.IN_PROGRESS:
-			msg = 'HTTP/1.0 202 Accepted'
-		elif response == ogResponses.OK:
-			msg = 'HTTP/1.0 200 OK'
-		else:
-			return msg
-
-		if not jsonResp == None:
-			msg = msg + '\nContent-Type:application/json'
-			msg = msg + '\nContent-Length:' + str(len(jsonResp.dumpMsg()))
-			msg = msg + '\n' + jsonResp.dumpMsg()
-
-		msg = msg + '\r\n\r\n'
-		return msg
 
 	def processOperation(self, httpparser, client):
 		op = httpparser.getRequestOP()
@@ -100,7 +109,7 @@ class ogRest():
 			elif ("run/schedule" in URI):
 				self.process_schedule(client)
 			else:
-				client.send(self.getResponse(ogResponses.BAD_REQUEST))
+				client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 		elif ("POST" in op):
 			if ("poweroff" in URI):
 				self.process_poweroff(client)
@@ -117,69 +126,68 @@ class ogRest():
 			elif ("image/restore" in URI):
 				self.process_irestore(client, httpparser)
 			else:
-				client.send(self.getResponse(ogResponses.BAD_REQUEST))
+				client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 		else:
-			client.send(self.getResponse(ogResponses.BAD_REQUEST))
+			client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 
 		return 0
 
 	def process_reboot(self, client):
-		client.send(self.getResponse(ogResponses.IN_PROGRESS))
+		client.send(restResponse.getResponse(ogResponses.IN_PROGRESS))
 		client.disconnect()
 		threading.Thread(target=ogThread.reboot).start()
 
 	def process_poweroff(self, client):
-		client.send(self.getResponse(ogResponses.IN_PROGRESS))
+		client.send(restResponse.getResponse(ogResponses.IN_PROGRESS))
 		client.disconnect()
 		threading.Thread(target=ogThread.poweroff).start()
 
 	def process_probe(self, client):
-		client.send(self.getResponse(ogResponses.OK))
+		client.send(restResponse.getResponse(ogResponses.OK))
 
 	def process_shellrun(self, client, httpparser):
 		if httpparser.getCMD() == None:
-			client.send(self.getResponse(ogResponses.BAD_REQUEST))
+			client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 			return
 
 		try:
 			ogThread.execcmd(self.msgqueue, httpparser)
 		except ValueError as err:
 			print(err.args[0])
-			client.send(self.getResponse(ogResponses.BAD_REQUEST))
+			client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 			return
 
-		client.send(self.getResponse(ogResponses.OK))
+		client.send(restResponse.getResponse(ogResponses.OK))
 
 	def process_shellout(self, client):
 		jsonResp = jsonResponse()
 		if self.msgqueue.empty():
 			jsonResp.addElement('out', '')
-			client.send(self.getResponse(ogResponses.OK, jsonResp))
+			client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 		else:
 			jsonResp.addElement('out', self.msgqueue.get())
-			client.send(self.getResponse(ogResponses.OK, jsonResp))
+			client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
 	def process_session(self, client, httpparser):
-		threading.Thread(target=ogThread.procsession, args=(self.msgqueue, httpparser,)).start()
-		client.send(self.getResponse(ogResponses.OK))
+		threading.Thread(target=ogThread.procsession, args=(client, httpparser,)).start()
 
 	def process_software(self, client, httpparser):
 		path = '/tmp/CSft-' + client.ip + '-' + partition
 		threading.Thread(target=ogThread.procsoftware, args=(self.msgqueue, httpparser, path,)).start()
-		client.send(self.getResponse(ogResponses.OK))
+		client.send(restResponse.getResponse(ogResponses.OK))
 
 	def process_hardware(self, client):
 		path = '/tmp/Chrd-' + client.ip
 		threading.Thread(target=ogThread.prochardware, args=(self.msgqueue, path,)).start()
-		client.send(self.getResponse(ogResponses.OK))
+		client.send(restResponse.getResponse(ogResponses.OK))
 
 	def process_schedule(self, client):
-		client.send(self.getResponse(ogResponses.OK))
+		client.send(restResponse.getResponse(ogResponses.OK))
 
 	def process_setup(self, client, httpparser):
 		threading.Thread(target=ogThread.procsetup, args=(self.msgqueue, httpparser,)).start()
-		client.send(self.getResponse(ogResponses.OK))
+		client.send(restResponse.getResponse(ogResponses.OK))
 
 	def process_irestore(self, client, httpparser):
 		threading.Thread(target=ogThread.procirestore, args=(self.msgqueue, httpparser,)).start()
-		client.send(self.getResponse(ogResponses.OK))
+		client.send(restResponse.getResponse(ogResponses.OK))

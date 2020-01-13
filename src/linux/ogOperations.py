@@ -29,7 +29,11 @@ def procsession(httpparser):
 	disk = httpparser.getDisk()
 	partition = httpparser.getPartition()
 
-	result = subprocess.check_output([OG_PATH + 'interfaceAdm/IniciarSesion', disk, partition], shell=True)
+	try:
+		result = subprocess.check_output([OG_PATH + 'interfaceAdm/IniciarSesion', disk, partition], shell=True)
+	except:
+		raise ValueError('Error: Incorrect command value')
+
 	return result.decode('utf-8')
 
 def procsoftware(httpparser, path):
