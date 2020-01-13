@@ -68,9 +68,23 @@ class ogThread():
 		client.send(restResponse.getResponse(ogResponses.OK))
 
 	# Process software
-	def procsoftware(msgqueue, httpparser, path):
-		msgqueue.queue.clear()
-		msgqueue.put(ogOperations.procsoftware(httpparser, path))
+	def procsoftware(client, httpparser, path):
+		try:
+			ogOperations.procsoftware(httpparser, path)
+		except ValueError as err:
+			client.send(restResponse.getResponse(ogResponses.INTERNAL_ERR))
+			return
+
+		jsonResp = jsonResponse()
+		jsonResp.addElement('disk', httpparser.getDisk())
+		jsonResp.addElement('partition', httpparser.getPartition())
+
+		f = open(path, "r")
+		lines = f.readlines()
+		f.close()
+		jsonResp.addElement('software', lines[0])
+
+		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
 	# Process hardware
 	def prochardware(msgqueue, path):
@@ -172,9 +186,8 @@ class ogRest():
 		threading.Thread(target=ogThread.procsession, args=(client, httpparser,)).start()
 
 	def process_software(self, client, httpparser):
-		path = '/tmp/CSft-' + client.ip + '-' + partition
-		threading.Thread(target=ogThread.procsoftware, args=(self.msgqueue, httpparser, path,)).start()
-		client.send(restResponse.getResponse(ogResponses.OK))
+		path = '/tmp/CSft-' + client.ip + '-' + httpparser.getPartition()
+		threading.Thread(target=ogThread.procsoftware, args=(client, httpparser, path,)).start()
 
 	def process_hardware(self, client):
 		path = '/tmp/Chrd-' + client.ip
