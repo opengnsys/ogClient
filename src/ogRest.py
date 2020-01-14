@@ -178,7 +178,9 @@ class ogRest():
 		threading.Thread(target=ogThread.poweroff).start()
 
 	def process_probe(self, client):
-		client.send(restResponse.getResponse(ogResponses.OK))
+		jsonResp = jsonResponse()
+		jsonResp.addElement('status', 'OPG')
+		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
 	def process_shellrun(self, client, httpparser):
 		if httpparser.getCMD() == None:
