@@ -44,9 +44,8 @@ class restResponse():
 
 class ogThread():
 	# Executing cmd thread
-	def execcmd(msgqueue, httpparser):
-		msgqueue.queue.clear()
-		msgqueue.put(ogOperations.execCMD(httpparser))
+	def execcmd(httpparser):
+		return ogOperations.execCMD(httpparser)
 
 	# Powering off thread
 	def poweroff():
@@ -128,17 +127,12 @@ class ogResponses(Enum):
 	INTERNAL_ERR=3
 
 class ogRest():
-	def __init__(self):
-		self.msgqueue = queue.Queue(1000)
-
 	def processOperation(self, httpparser, client):
 		op = httpparser.getRequestOP()
 		URI = httpparser.getURI()
 		if ("GET" in op):
 			if ("probe" in URI):
 				self.process_probe(client)
-			elif ("shell/output" in URI):
-				self.process_shellout(client)
 			elif ("hardware" in URI):
 				self.process_hardware(client)
 			elif ("run/schedule" in URI):
@@ -188,22 +182,18 @@ class ogRest():
 			return
 
 		try:
-			ogThread.execcmd(self.msgqueue, httpparser)
+			shellout = ogThread.execcmd(httpparser)
 		except ValueError as err:
 			print(err.args[0])
 			client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 			return
 
-		client.send(restResponse.getResponse(ogResponses.OK))
-
-	def process_shellout(self, client):
-		jsonResp = jsonResponse()
-		if self.msgqueue.empty():
-			jsonResp.addElement('out', '')
+		if httpparser.getEcho() == "true":
+			jsonResp = jsonResponse()
+			jsonResp.addElement('out', shellout)
 			client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 		else:
-			jsonResp.addElement('out', self.msgqueue.get())
-			client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
+			client.send(restResponse.getResponse(ogResponses.OK))
 
 	def process_session(self, client, httpparser):
 		threading.Thread(target=ogThread.procsession, args=(client, httpparser,)).start()

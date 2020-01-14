@@ -23,6 +23,7 @@ class HTTPParser:
 		self.type = None
 		self.profile = None
 		self.id = None
+		self.echo = None
 
 	def parser(self,data):
 		self.requestLine, self.headersAlone = data.split('\n', 1)
@@ -52,6 +53,10 @@ class HTTPParser:
 
 			if "run" in cmd:
 				self.cmd = jsoncmd["run"]
+				try:
+					self.echo = jsoncmd["echo"]
+				except:
+					pass
 
 			if "disk" in cmd:
 				self.disk = jsoncmd["disk"]
@@ -140,3 +145,6 @@ class HTTPParser:
 
 	def getId(self):
 		return self.id
+
+	def getEcho(self):
+		return self.echo
