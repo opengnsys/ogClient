@@ -102,8 +102,14 @@ class ogThread():
 		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
 	# Process setup
-	def procsetup(msgqueue, httpparser):
-		ogOperations.procsetup(httpparser)
+	def procsetup(client, httpparser):
+		jsonResp = jsonResponse()
+		jsonResp.addElement('disk', httpparser.getDisk())
+		jsonResp.addElement('cache', httpparser.getCache())
+		jsonResp.addElement('cache_size', httpparser.getCacheSize())
+		listconfig = ogOperations.procsetup(httpparser)
+		jsonResp.addElement('partition_setup', listconfig)
+		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
 	# Process image restore
 	def procirestore(httpparser):
@@ -212,8 +218,7 @@ class ogRest():
 		client.send(restResponse.getResponse(ogResponses.OK))
 
 	def process_setup(self, client, httpparser):
-		threading.Thread(target=ogThread.procsetup, args=(self.msgqueue, httpparser,)).start()
-		client.send(restResponse.getResponse(ogResponses.OK))
+		threading.Thread(target=ogThread.procsetup, args=(client, httpparser,)).start()
 
 	def process_irestore(self, client, httpparser):
 		threading.Thread(target=ogThread.procirestore, args=(client, httpparser,)).start()

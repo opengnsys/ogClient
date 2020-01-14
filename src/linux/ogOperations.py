@@ -60,10 +60,31 @@ def procsetup(httpparser):
 	cache = httpparser.getCache()
 	cachesize = httpparser.getCacheSize()
 	partlist = httpparser.getPartitionSetup()
+	listConfigs = []
 
 	for part in partlist:
+		i = 0
+		json = {}
 		cfg = 'dis=' + disk + '*che=' + cache + '*tch=' + cachesize + '!par=' + part["partition"] + '*cpt='+part["code"] + '*sfi=' + part['filesystem'] + '*tam=' + part['size'] + '*ope=' + part['format'] + '%'
-		subprocess.check_output([OG_PATH + 'interfaceAdm/Configurar', disk, cfg], shell=True)
+		try:
+			subprocess.check_output([OG_PATH + 'interfaceAdm/Configurar', disk, cfg], shell=True)
+		except:
+			continue
+
+		result = subprocess.check_output([OG_PATH + 'interfaceAdm/getConfiguration'], shell=True)
+		val = result.decode('utf-8').rstrip().split('\t')
+		while i < len(val):
+			val[i] = val[i].split('=')[1]
+			i += 1
+
+		json['partition'] = val[1]
+		json['code'] = val[4]
+		json['filesystem'] = val[2]
+		json['size'] = val[5]
+		json['format'] = val[6]
+		listConfigs.append(json)
+
+	return listConfigs
 
 def procirestore(httpparser):
 	disk = httpparser.getDisk()
