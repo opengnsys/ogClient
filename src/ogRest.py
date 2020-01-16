@@ -142,7 +142,7 @@ class ogThread():
 		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
 	# Process image restore
-	def procirestore(httpparser, ogRest):
+	def procirestore(client, httpparser, ogRest):
 		try:
 			ogOperations.procirestore(httpparser, ogRest)
 		except ValueError as err:
