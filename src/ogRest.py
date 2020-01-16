@@ -151,6 +151,20 @@ class ogThread():
 
 		client.send(restResponse.getResponse(ogResponses.OK))
 
+	# Process image create
+	def procicreate(client, path, httpparser, ogRest):
+		try:
+			ogOperations.procicreate(path, httpparser, ogRest)
+		except ValueError as err:
+			client.send(restResponse.getResponse(ogResponses.INTERNAL_ERR))
+			return
+
+		f = open(path, "r")
+		lines = f.readlines()
+		f.close()
+		jsonResp.addElement('software', lines[0])
+		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
+
 class ogResponses(Enum):
 	BAD_REQUEST=0
 	IN_PROGRESS=1
@@ -197,6 +211,8 @@ class ogRest():
 				self.process_irestore(client, httpparser)
 			elif ("stop" in URI):
 				self.process_stop(client)
+			elif ("image/create" in URI):
+				self.process_icreate(client, httpparser)
 			else:
 				client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 		else:
@@ -251,3 +267,7 @@ class ogRest():
 			os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
 			self.terminated = True
 			sys.exit(0)
+
+	def process_icreate(self, client, httpparser):
+		path = '/tmp/CSft-' + client.ip + '-' + httpparser.getPartition()
+		threading.Thread(target=ogThread.procicreate, args=(client, path, httpparser, self,)).start()

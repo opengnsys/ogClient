@@ -118,3 +118,26 @@ def procirestore(httpparser, ogRest):
 		raise ValueError('Error: Incorrect command value')
 
 	return output.decode('utf-8')
+
+def procicreate(path, httpparser, ogRest):
+	disk = httpparser.getDisk()
+	partition = httpparser.getPartition()
+	name = httpparser.getName()
+	repo = httpparser.getRepo()
+
+	try:
+		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/InventarioSoftware', disk, partition, path], stdout=subprocess.PIPE, shell=True)
+		(output, error) = ogRest.proc.communicate()
+	except:
+		raise ValueError('Error: Incorrect command value')
+
+	if ogRest.terminated:
+		return
+
+	try:
+		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/CrearImagen', disk, partition, name, repo], stdout=subprocess.PIPE, shell=True)
+		ogRest.proc.communicate()
+	except:
+		raise ValueError('Error: Incorrect command value')
+
+	return output.decode('utf-8')
