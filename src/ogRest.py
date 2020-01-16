@@ -4,6 +4,9 @@ import time
 from enum import Enum
 import json
 import queue
+import sys
+import os
+import signal
 
 from src.HTTPParser import *
 
@@ -31,6 +34,8 @@ class restResponse():
 			msg = 'HTTP/1.0 200 OK'
 		elif response == ogResponses.INTERNAL_ERR:
 			msg = 'HTTP/1.0 500 Internal Server Error'
+		elif response == ogResponses.UNAUTHORIZED:
+			msg = 'HTTP/1.0 401 Unauthorized'
 		else:
 			return msg
 
@@ -47,13 +52,13 @@ class restResponse():
 
 class ogThread():
 	# Executing cmd thread
-	def execcmd(client, httpparser):
+	def execcmd(client, httpparser, ogRest):
 		if httpparser.getCMD() == None:
 			client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 			return
 
 		try:
-			shellout = ogOperations.execCMD(httpparser)
+			shellout = ogOperations.execCMD(httpparser, ogRest)
 		except ValueError as err:
 			client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 			return
@@ -75,9 +80,9 @@ class ogThread():
 		ogOperations.reboot()
 
 	# Process session
-	def procsession(client, httpparser):
+	def procsession(client, httpparser, ogRest):
 		try:
-			ogOperations.procsession(httpparser)
+			ogOperations.procsession(httpparser, ogRest)
 		except ValueError as err:
 			client.send(restResponse.getResponse(ogResponses.INTERNAL_ERR))
 			return
@@ -85,9 +90,9 @@ class ogThread():
 		client.send(restResponse.getResponse(ogResponses.OK))
 
 	# Process software
-	def procsoftware(client, httpparser, path):
+	def procsoftware(client, httpparser, path, ogRest):
 		try:
-			ogOperations.procsoftware(httpparser, path)
+			ogOperations.procsoftware(httpparser, path, ogRest)
 		except ValueError as err:
 			client.send(restResponse.getResponse(ogResponses.INTERNAL_ERR))
 			return
@@ -104,9 +109,9 @@ class ogThread():
 		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
 	# Process hardware
-	def prochardware(client, path):
+	def prochardware(client, path, ogRest):
 		try:
-			ogOperations.prochardware(path)
+			ogOperations.prochardware(path, ogRest)
 		except ValueError as err:
 			client.send(restResponse.getResponse(ogResponses.INTERNAL_ERR))
 			return
@@ -119,19 +124,19 @@ class ogThread():
 		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
 	# Process setup
-	def procsetup(client, httpparser):
+	def procsetup(client, httpparser, ogRest):
 		jsonResp = jsonResponse()
 		jsonResp.addElement('disk', httpparser.getDisk())
 		jsonResp.addElement('cache', httpparser.getCache())
 		jsonResp.addElement('cache_size', httpparser.getCacheSize())
-		listconfig = ogOperations.procsetup(httpparser)
+		listconfig = ogOperations.procsetup(httpparser, ogRest)
 		jsonResp.addElement('partition_setup', listconfig)
 		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
 	# Process image restore
-	def procirestore(httpparser):
+	def procirestore(httpparser, ogRest):
 		try:
-			ogOperations.procirestore(httpparser)
+			ogOperations.procirestore(httpparser, ogRest)
 		except ValueError as err:
 			client.send(restResponse.getResponse(ogResponses.INTERNAL_ERR))
 			return
@@ -143,11 +148,21 @@ class ogResponses(Enum):
 	IN_PROGRESS=1
 	OK=2
 	INTERNAL_ERR=3
+	UNAUTHORIZED=4
 
 class ogRest():
+	def __init__(self):
+		self.proc = None
+		self.terminated = False
+
 	def processOperation(self, httpparser, client):
 		op = httpparser.getRequestOP()
 		URI = httpparser.getURI()
+
+		if (not "stop" in URI and not self.proc == None and self.proc.poll() == None):
+			client.send(restResponse.getResponse(ogResponses.UNAUTHORIZED))
+			return
+
 		if ("GET" in op):
 			if "hardware" in URI:
 				self.process_hardware(client)
@@ -172,6 +187,8 @@ class ogRest():
 				self.process_setup(client, httpparser)
 			elif ("image/restore" in URI):
 				self.process_irestore(client, httpparser)
+			elif ("stop" in URI):
+				self.process_stop(client)
 			else:
 				client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 		else:
@@ -195,24 +212,34 @@ class ogRest():
 		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
 	def process_shellrun(self, client, httpparser):
-		threading.Thread(target=ogThread.execcmd, args=(client, httpparser,)).start()
+		threading.Thread(target=ogThread.execcmd, args=(client, httpparser, self,)).start()
 
 	def process_session(self, client, httpparser):
-		threading.Thread(target=ogThread.procsession, args=(client, httpparser,)).start()
+		threading.Thread(target=ogThread.procsession, args=(client, httpparser, self,)).start()
 
 	def process_software(self, client, httpparser):
 		path = '/tmp/CSft-' + client.ip + '-' + httpparser.getPartition()
-		threading.Thread(target=ogThread.procsoftware, args=(client, httpparser, path,)).start()
+		threading.Thread(target=ogThread.procsoftware, args=(client, httpparser, path, self,)).start()
 
 	def process_hardware(self, client):
 		path = '/tmp/Chrd-' + client.ip
-		threading.Thread(target=ogThread.prochardware, args=(client, path,)).start()
+		threading.Thread(target=ogThread.prochardware, args=(client, path, self,)).start()
 
 	def process_schedule(self, client):
 		client.send(restResponse.getResponse(ogResponses.OK))
 
 	def process_setup(self, client, httpparser):
-		threading.Thread(target=ogThread.procsetup, args=(client, httpparser,)).start()
+		threading.Thread(target=ogThread.procsetup, args=(client, httpparser, self,)).start()
 
 	def process_irestore(self, client, httpparser):
-		threading.Thread(target=ogThread.procirestore, args=(client, httpparser,)).start()
+		threading.Thread(target=ogThread.procirestore, args=(client, httpparser, self,)).start()
+
+	def process_stop(self, client):
+		client.disconnect()
+		if self.proc == None:
+			return
+
+		if self.proc.poll() == None:
+			os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+			self.terminated = True
+			sys.exit(0)

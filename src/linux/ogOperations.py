@@ -15,47 +15,51 @@ def reboot():
 	else:
 		subprocess.call(['/sbin/reboot'])
 
-def execCMD(httpparser):
+def execCMD(httpparser, ogRest):
 	cmd = httpparser.getCMD()
 	cmds = cmd.split(" ")
 	try:
-		result = subprocess.check_output(cmds)
+		ogRest.proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, shell=True)
+		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
 
-	return result.decode('utf-8')
+	return output.decode('utf-8')
 
-def procsession(httpparser):
+def procsession(httpparser, ogRest):
 	disk = httpparser.getDisk()
 	partition = httpparser.getPartition()
 
 	try:
-		result = subprocess.check_output([OG_PATH + 'interfaceAdm/IniciarSesion', disk, partition], shell=True)
+		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/IniciarSesion', disk, partition], stdout=subprocess.PIPE, shell=True)
+		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
 
-	return result.decode('utf-8')
+	return output.decode('utf-8')
 
-def procsoftware(httpparser, path):
+def procsoftware(httpparser, path, ogRest):
 	disk = httpparser.getDisk()
 	partition = httpparser.getPartition()
 
 	try:
-		result = subprocess.check_output([OG_PATH + 'interfaceAdm/InventarioSoftware', disk, partition, path], shell=True)
+		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/InventarioSoftware', disk, partition, path], stdout=subprocess.PIPE, shell=True)
+		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
 
-	return result.decode('utf-8')
+	return output.decode('utf-8')
 
-def prochardware(path):
+def prochardware(path, ogRest):
 	try:
-		result = subprocess.check_output([OG_PATH + 'interfaceAdm/InventarioHardware', path], shell=True)
+		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/InventarioHardware', path], stdout=subprocess.PIPE, shell=True)
+		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
 
-	return result.decode('utf-8')
+	return output.decode('utf-8')
 
-def procsetup(httpparser):
+def procsetup(httpparser, ogRest):
 	disk = httpparser.getDisk()
 	cache = httpparser.getCache()
 	cachesize = httpparser.getCacheSize()
@@ -66,8 +70,12 @@ def procsetup(httpparser):
 		i = 0
 		json = {}
 		cfg = 'dis=' + disk + '*che=' + cache + '*tch=' + cachesize + '!par=' + part["partition"] + '*cpt='+part["code"] + '*sfi=' + part['filesystem'] + '*tam=' + part['size'] + '*ope=' + part['format'] + '%'
+		if ogRest.terminated:
+			break
+
 		try:
-			subprocess.check_output([OG_PATH + 'interfaceAdm/Configurar', disk, cfg], shell=True)
+			ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/Configurar', disk, cfg], stdout=subprocess.PIPE, shell=True)
+			(output, error) = ogRest.proc.communicate()
 		except:
 			continue
 
@@ -86,7 +94,7 @@ def procsetup(httpparser):
 
 	return listConfigs
 
-def procirestore(httpparser):
+def procirestore(httpparser, ogRest):
 	disk = httpparser.getDisk()
 	partition = httpparser.getPartition()
 	name = httpparser.getName()
@@ -96,8 +104,9 @@ def procirestore(httpparser):
 	cid = httpparser.getId()
 
 	try:
-		result = subprocess.check_output([OG_PATH + 'interfaceAdm/RestaurarImagen', disk, partition, name, repo, ctype], shell=True)
+		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/RestaurarImagen', disk, partition, name, repo, ctype], stdout=subprocess.PIPE, shell=True)
+		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
 
-	return result.decode('utf-8')
+	return output.decode('utf-8')
