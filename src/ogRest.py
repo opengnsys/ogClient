@@ -191,7 +191,7 @@ class ogRest():
 			client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 			return
 
-		if httpparser.getEcho() == "true":
+		if httpparser.getEcho():
 			jsonResp = jsonResponse()
 			jsonResp.addElement('out', shellout)
 			client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
