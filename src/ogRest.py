@@ -134,9 +134,7 @@ class ogRest():
 		op = httpparser.getRequestOP()
 		URI = httpparser.getURI()
 		if ("GET" in op):
-			if ("probe" in URI):
-				self.process_probe(client)
-			elif ("hardware" in URI):
+			if "hardware" in URI:
 				self.process_hardware(client)
 			elif ("run/schedule" in URI):
 				self.process_schedule(client)
@@ -145,6 +143,8 @@ class ogRest():
 		elif ("POST" in op):
 			if ("poweroff" in URI):
 				self.process_poweroff(client)
+			elif "probe" in URI:
+				self.process_probe(client)
 			elif ("reboot" in URI):
 				self.process_reboot(client)
 			elif ("shell/run" in URI):
