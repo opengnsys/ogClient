@@ -24,7 +24,7 @@ class restResponse():
 	def getResponse(response, jsonResp=None):
 		msg = ''
 		if response == ogResponses.BAD_REQUEST:
-			msg = 'HTTP/1.0 400 Bad request'
+			msg = 'HTTP/1.0 400 Bad Request'
 		elif response == ogResponses.IN_PROGRESS:
 			msg = 'HTTP/1.0 202 Accepted'
 		elif response == ogResponses.OK:
@@ -34,12 +34,15 @@ class restResponse():
 		else:
 			return msg
 
-		if not jsonResp == None:
-			msg = msg + '\nContent-Type:application/json'
-			msg = msg + '\nContent-Length:' + str(len(jsonResp.dumpMsg()))
-			msg = msg + '\n' + jsonResp.dumpMsg()
+		msg += '\r\n'
 
-		msg = msg + '\r\n\r\n'
+		if jsonResp:
+			msg += 'Content-Length:' + str(len(jsonResp.dumpMsg()))
+			msg += '\r\nContent-Type:application/json'
+			msg += '\r\n\r\n' + jsonResp.dumpMsg()
+		else:
+			msg += '\r\n'
+
 		return msg
 
 class ogThread():
