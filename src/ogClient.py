@@ -65,7 +65,8 @@ class ogClient:
 	def receive(self):
 		try:
 			data = self.sock.recv(1024).decode('utf-8')
-		except socket.err as err:
+		except socket.error as err:
+			data = ''
 			print ('Error3 ' + str(err))
 
 		if len(data) == 0:
