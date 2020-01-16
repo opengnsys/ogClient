@@ -165,6 +165,20 @@ class ogThread():
 		jsonResp.addElement('software', lines[0])
 		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
 
+	# Process refresh
+	def procrefresh(client, ogRest):
+		try:
+			out = ogOperations.procrefresh(ogRest)
+		except ValueError as err:
+			client.send(restResponse.getResponse(ogResponses.INTERNAL_ERR))
+			return
+
+		jsonResp = jsonResponse()
+		jsonResp.addElement('disk', out[0])
+		jsonResp.addElement('partition_setup', out[1])
+
+		client.send(restResponse.getResponse(ogResponses.OK, jsonResp))
+
 class ogResponses(Enum):
 	BAD_REQUEST=0
 	IN_PROGRESS=1
@@ -213,6 +227,8 @@ class ogRest():
 				self.process_stop(client)
 			elif ("image/create" in URI):
 				self.process_icreate(client, httpparser)
+			elif ("refresh" in URI):
+				self.process_refresh(client)
 			else:
 				client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 		else:
@@ -271,3 +287,6 @@ class ogRest():
 	def process_icreate(self, client, httpparser):
 		path = '/tmp/CSft-' + client.ip + '-' + httpparser.getPartition()
 		threading.Thread(target=ogThread.procicreate, args=(client, path, httpparser, self,)).start()
+
+	def process_refresh(self, client):
+		threading.Thread(target=ogThread.procrefresh, args=(client, self,)).start()

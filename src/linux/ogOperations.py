@@ -11,6 +11,30 @@ import subprocess
 
 OG_PATH = '/opt/opengnsys/'
 
+def parseGetConf(out):
+	listConfigs = []
+	disk = -1;
+
+	configs = out.split('\n')
+	configs = filter(None, configs)
+	for item in configs:
+		i = 0
+		json = {}
+		val = item.rstrip().split('\t')
+		while i < len(val):
+			val[i] = val[i].split('=')[1]
+			i += 1
+
+		json['partition'] = val[1]
+		json['code'] = val[4]
+		json['filesystem'] = val[2]
+		json['size'] = val[5]
+		json['format'] = val[6]
+		disk = val[0]
+		listConfigs.append(json)
+
+	return [disk, listConfigs]
+
 def poweroff():
 	if os.path.exists('/scripts/oginit'):
 		subprocess.call('source ' + OG_SCRIPT_PATH + 'etc/preinit/loadenviron.sh; ' + OG_SCRIPT_PATH + 'scripts/poweroff', shell=True)
@@ -75,8 +99,6 @@ def procsetup(httpparser, ogRest):
 	listConfigs = []
 
 	for part in partlist:
-		i = 0
-		json = {}
 		cfg = 'dis=' + disk + '*che=' + cache + '*tch=' + cachesize + '!par=' + part["partition"] + '*cpt='+part["code"] + '*sfi=' + part['filesystem'] + '*tam=' + part['size'] + '*ope=' + part['format'] + '%'
 		if ogRest.terminated:
 			break
@@ -87,20 +109,8 @@ def procsetup(httpparser, ogRest):
 		except:
 			continue
 
-		result = subprocess.check_output([OG_PATH + 'interfaceAdm/getConfiguration'], shell=True)
-		val = result.decode('utf-8').rstrip().split('\t')
-		while i < len(val):
-			val[i] = val[i].split('=')[1]
-			i += 1
-
-		json['partition'] = val[1]
-		json['code'] = val[4]
-		json['filesystem'] = val[2]
-		json['size'] = val[5]
-		json['format'] = val[6]
-		listConfigs.append(json)
-
-	return listConfigs
+	result = subprocess.check_output([OG_PATH + 'interfaceAdm/getConfiguration'], shell=True)
+	return parseGetConf(result.decode('utf-8'))[1]
 
 def procirestore(httpparser, ogRest):
 	disk = httpparser.getDisk()
@@ -141,3 +151,15 @@ def procicreate(path, httpparser, ogRest):
 		raise ValueError('Error: Incorrect command value')
 
 	return output.decode('utf-8')
+
+def procrefresh(ogRest):
+	listConfigs = []
+	disk = -1;
+
+	try:
+		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/getConfiguration'], stdout=subprocess.PIPE, shell=True)
+		(output, error) = ogRest.proc.communicate()
+	except:
+		raise ValueError('Error: Incorrect command value')
+
+	return parseGetConf(output.decode('utf-8'))
