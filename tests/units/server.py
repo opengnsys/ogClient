@@ -9,9 +9,6 @@
 import socket
 import sys
 
-HOST = '127.0.0.1'
-PORT = '1234'
-
 class Server():
 
     _probe_json = '{"id": 0, "name": "test_local", "center": 0, "room": 0}'
