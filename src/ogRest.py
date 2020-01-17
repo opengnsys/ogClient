@@ -159,6 +159,13 @@ class ogThread():
 			client.send(restResponse.getResponse(ogResponses.INTERNAL_ERR))
 			return
 
+		jsonResp = jsonResponse()
+		jsonResp.addElement('disk', httpparser.getDisk())
+		jsonResp.addElement('partition', httpparser.getPartition())
+		jsonResp.addElement('code', httpparser.getCode())
+		jsonResp.addElement('id', httpparser.getId())
+		jsonResp.addElement('name', httpparser.getName())
+		jsonResp.addElement('repository', httpparser.getRepo())
 		f = open(path, "r")
 		lines = f.readlines()
 		f.close()
