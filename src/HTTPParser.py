@@ -55,51 +55,51 @@ class HTTPParser:
 			msgs = self.headersAlone.rstrip().split('\n')
 			cmd = msgs[len(msgs) - 1]
 			try:
-				jsoncmd = json.loads(cmd)
+				json_param = json.loads(cmd)
 			except ValueError as e:
 				print ("Error: Json message incomplete")
 				return
 
 			if "run" in cmd:
-				self.cmd = jsoncmd["run"]
+				self.cmd = json_param["run"]
 				try:
-					self.echo = jsoncmd["echo"]
+					self.echo = json_param["echo"]
 				except:
 					pass
 
 			if "disk" in cmd:
-				self.disk = jsoncmd["disk"]
+				self.disk = json_param["disk"]
 
 			if "partition" in cmd:
 				if not "partition_setup" in cmd:
-					self.partition = jsoncmd["partition"]
+					self.partition = json_param["partition"]
 
 			if "cache" in cmd:
-				self.cache = jsoncmd["cache"]
+				self.cache = json_param["cache"]
 
 			if "cache_size" in cmd:
-				self.cache_size = jsoncmd["cache_size"]
+				self.cache_size = json_param["cache_size"]
 
 			if "partition_setup" in cmd:
-				self.partition_setup = jsoncmd["partition_setup"]
+				self.partition_setup = json_param["partition_setup"]
 
 			if "name" in cmd:
-				self.name = jsoncmd["name"]
+				self.name = json_param["name"]
 
 			if "repository" in cmd:
-				self.repo = jsoncmd["repository"]
+				self.repo = json_param["repository"]
 
 			if "type" in cmd:
-				self.type = jsoncmd["type"]
+				self.type = json_param["type"]
 
 			if "profile" in cmd:
-				self.profile = jsoncmd["profile"]
+				self.profile = json_param["profile"]
 
 			if "id" in cmd:
-				self.id = jsoncmd["id"]
+				self.id = json_param["id"]
 
 			if "code" in cmd:
-				self.code = jsoncmd["code"]
+				self.code = json_param["code"]
 
 	def getHeaderLine(self):
 		return self.headersAlone
