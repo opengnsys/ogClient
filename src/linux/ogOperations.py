@@ -48,7 +48,7 @@ def reboot():
 		subprocess.call(['/sbin/reboot'])
 
 def execCMD(httpparser, ogRest):
-	cmd = httpparser.getCMD()
+	cmd = httpparser.getrun()
 	cmds = cmd.split(" ")
 	try:
 		ogRest.proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, shell=True)

@@ -61,7 +61,7 @@ class restResponse():
 class ogThread():
 	# Executing cmd thread
 	def execcmd(client, httpparser, ogRest):
-		if httpparser.getCMD() == None:
+		if httpparser.getrun() == None:
 			client.send(restResponse.getResponse(ogResponses.BAD_REQUEST))
 			return
 

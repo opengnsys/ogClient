@@ -20,7 +20,7 @@ class HTTPParser:
 		self.contentLen = None
 		self.operation = None
 		self.URI = None
-		self.cmd = None
+		self.run = None
 		self.partition = None
 		self.disk = None
 		self.cache = None
@@ -61,7 +61,7 @@ class HTTPParser:
 				return
 
 			if "run" in cmd:
-				self.cmd = json_param["run"]
+				self.run = json_param["run"]
 				try:
 					self.echo = json_param["echo"]
 				except:
@@ -125,8 +125,8 @@ class HTTPParser:
 	def getURI(self):
 		return self.URI
 
-	def getCMD(self):
-		return self.cmd
+	def getrun(self):
+		return self.run
 
 	def getDisk(self):
 		return self.disk
