@@ -10,7 +10,7 @@ import email
 from io import StringIO
 import json
 
-class HTTPParser:
+class restRequest:
 	def __init__(self):
 		self.requestLine = None
 		self.headersAlone = None

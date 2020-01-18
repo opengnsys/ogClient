@@ -47,8 +47,8 @@ def reboot():
 	else:
 		subprocess.call(['/sbin/reboot'])
 
-def execCMD(httpparser, ogRest):
-	cmd = httpparser.getrun()
+def execCMD(request, ogRest):
+	cmd = request.getrun()
 	cmds = cmd.split(" ")
 	try:
 		ogRest.proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, shell=True)
@@ -58,9 +58,9 @@ def execCMD(httpparser, ogRest):
 
 	return output.decode('utf-8')
 
-def procsession(httpparser, ogRest):
-	disk = httpparser.getDisk()
-	partition = httpparser.getPartition()
+def procsession(request, ogRest):
+	disk = request.getDisk()
+	partition = request.getPartition()
 
 	try:
 		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/IniciarSesion', disk, partition], stdout=subprocess.PIPE, shell=True)
@@ -70,9 +70,9 @@ def procsession(httpparser, ogRest):
 
 	return output.decode('utf-8')
 
-def procsoftware(httpparser, path, ogRest):
-	disk = httpparser.getDisk()
-	partition = httpparser.getPartition()
+def procsoftware(request, path, ogRest):
+	disk = request.getDisk()
+	partition = request.getPartition()
 
 	try:
 		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/InventarioSoftware', disk, partition, path], stdout=subprocess.PIPE, shell=True)
@@ -91,11 +91,11 @@ def prochardware(path, ogRest):
 
 	return output.decode('utf-8')
 
-def procsetup(httpparser, ogRest):
-	disk = httpparser.getDisk()
-	cache = httpparser.getCache()
-	cachesize = httpparser.getCacheSize()
-	partlist = httpparser.getPartitionSetup()
+def procsetup(request, ogRest):
+	disk = request.getDisk()
+	cache = request.getCache()
+	cachesize = request.getCacheSize()
+	partlist = request.getPartitionSetup()
 	listConfigs = []
 
 	for part in partlist:
@@ -112,14 +112,14 @@ def procsetup(httpparser, ogRest):
 	result = subprocess.check_output([OG_PATH + 'interfaceAdm/getConfiguration'], shell=True)
 	return parseGetConf(result.decode('utf-8'))[1]
 
-def procirestore(httpparser, ogRest):
-	disk = httpparser.getDisk()
-	partition = httpparser.getPartition()
-	name = httpparser.getName()
-	repo = httpparser.getRepo()
-	ctype = httpparser.getType()
-	profile = httpparser.getProfile()
-	cid = httpparser.getId()
+def procirestore(request, ogRest):
+	disk = request.getDisk()
+	partition = request.getPartition()
+	name = request.getName()
+	repo = request.getRepo()
+	ctype = request.getType()
+	profile = request.getProfile()
+	cid = request.getId()
 
 	try:
 		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/RestaurarImagen', disk, partition, name, repo, ctype], stdout=subprocess.PIPE, shell=True)
@@ -129,11 +129,11 @@ def procirestore(httpparser, ogRest):
 
 	return output.decode('utf-8')
 
-def procicreate(path, httpparser, ogRest):
-	disk = httpparser.getDisk()
-	partition = httpparser.getPartition()
-	name = httpparser.getName()
-	repo = httpparser.getRepo()
+def procicreate(path, request, ogRest):
+	disk = request.getDisk()
+	partition = request.getPartition()
+	name = request.getName()
+	repo = request.getRepo()
 
 	try:
 		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/InventarioSoftware', disk, partition, path], stdout=subprocess.PIPE, shell=True)

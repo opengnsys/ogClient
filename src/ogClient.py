@@ -13,7 +13,7 @@ import time
 import email
 from io import StringIO
 
-from src.HTTPParser import *
+from src.restRequest import *
 from src.ogRest import *
 from enum import Enum
 
@@ -83,7 +83,7 @@ class ogClient:
 			self.connect()
 
 		self.data = self.data + data
-		httpparser = HTTPParser()
+		request = restRequest()
 
 		if not self.trailer:
 			if self.data.find("\r\n") > 0:
@@ -97,8 +97,8 @@ class ogClient:
 				self.trailer = True
 
 		if self.trailer and len(self.data) >= self.content_len:
-			httpparser.parser(self.data)
-			self.ogrest.processOperation(httpparser, self)
+			request.parser(self.data)
+			self.ogrest.processOperation(request, self)
 
 			# Cleanup state information from request
 			self.data = ""
