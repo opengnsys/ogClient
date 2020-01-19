@@ -16,7 +16,7 @@ import sys
 import os
 import signal
 
-from src.HTTPParser import *
+from src.restRequest import *
 
 if platform.system() == 'Linux':
 	from src.linux import ogOperations
