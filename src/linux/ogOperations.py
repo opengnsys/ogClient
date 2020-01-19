@@ -58,7 +58,7 @@ def execCMD(request, ogRest):
 
 	return output.decode('utf-8')
 
-def procsession(request, ogRest):
+def session(request, ogRest):
 	disk = request.getDisk()
 	partition = request.getPartition()
 
@@ -70,7 +70,7 @@ def procsession(request, ogRest):
 
 	return output.decode('utf-8')
 
-def procsoftware(request, path, ogRest):
+def software(request, path, ogRest):
 	disk = request.getDisk()
 	partition = request.getPartition()
 
@@ -82,7 +82,7 @@ def procsoftware(request, path, ogRest):
 
 	return output.decode('utf-8')
 
-def prochardware(path, ogRest):
+def hardware(path, ogRest):
 	try:
 		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/InventarioHardware', path], stdout=subprocess.PIPE, shell=True)
 		(output, error) = ogRest.proc.communicate()
@@ -91,7 +91,7 @@ def prochardware(path, ogRest):
 
 	return output.decode('utf-8')
 
-def procsetup(request, ogRest):
+def setup(request, ogRest):
 	disk = request.getDisk()
 	cache = request.getCache()
 	cachesize = request.getCacheSize()
@@ -112,7 +112,7 @@ def procsetup(request, ogRest):
 	result = subprocess.check_output([OG_PATH + 'interfaceAdm/getConfiguration'], shell=True)
 	return parseGetConf(result.decode('utf-8'))[1]
 
-def procirestore(request, ogRest):
+def image_restore(request, ogRest):
 	disk = request.getDisk()
 	partition = request.getPartition()
 	name = request.getName()
@@ -129,7 +129,7 @@ def procirestore(request, ogRest):
 
 	return output.decode('utf-8')
 
-def procicreate(path, request, ogRest):
+def image_create(path, request, ogRest):
 	disk = request.getDisk()
 	partition = request.getPartition()
 	name = request.getName()
@@ -152,7 +152,7 @@ def procicreate(path, request, ogRest):
 
 	return output.decode('utf-8')
 
-def procrefresh(ogRest):
+def refresh(ogRest):
 	listConfigs = []
 	disk = -1;
 

@@ -61,7 +61,6 @@ class restResponse():
 		return self.msg
 
 class ogThread():
-	# Executing cmd thread
 	def execcmd(client, request, ogRest):
 		if request.getrun() == None:
 			response = restResponse(ogResponses.BAD_REQUEST)
@@ -84,19 +83,16 @@ class ogThread():
 			response = restResponse(ogResponses.OK)
 			client.send(response.get())
 
-	# Powering off thread
 	def poweroff():
 		time.sleep(2)
 		ogOperations.poweroff()
 
-	# Rebooting thread
 	def reboot():
 		ogOperations.reboot()
 
-	# Process session
-	def procsession(client, request, ogRest):
+	def session(client, request, ogRest):
 		try:
-			ogOperations.procsession(request, ogRest)
+			ogOperations.session(request, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -105,10 +101,9 @@ class ogThread():
 		response = restResponse(ogResponses.OK)
 		client.send(response.get())
 
-	# Process software
-	def procsoftware(client, request, path, ogRest):
+	def software(client, request, path, ogRest):
 		try:
-			ogOperations.procsoftware(request, path, ogRest)
+			ogOperations.software(request, path, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -126,10 +121,9 @@ class ogThread():
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())
 
-	# Process hardware
-	def prochardware(client, path, ogRest):
+	def hardware(client, path, ogRest):
 		try:
-			ogOperations.prochardware(path, ogRest)
+			ogOperations.hardware(path, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -144,12 +138,11 @@ class ogThread():
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())
 
-	# Process setup
-	def procsetup(client, request, ogRest):
+	def setup(client, request, ogRest):
 		listconfig = []
 
 		try:
-			listconfig = ogOperations.procsetup(request, ogRest)
+			listconfig = ogOperations.setup(request, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -164,10 +157,9 @@ class ogThread():
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())
 
-	# Process image restore
-	def procirestore(client, request, ogRest):
+	def image_restore(client, request, ogRest):
 		try:
-			ogOperations.procirestore(request, ogRest)
+			ogOperations.image_restore(request, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -176,10 +168,9 @@ class ogThread():
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())
 
-	# Process image create
-	def procicreate(client, path, request, ogRest):
+	def image_create(client, path, request, ogRest):
 		try:
-			ogOperations.procicreate(path, request, ogRest)
+			ogOperations.image_create(path, request, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -200,10 +191,9 @@ class ogThread():
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())
 
-	# Process refresh
-	def procrefresh(client, ogRest):
+	def refresh(client, ogRest):
 		try:
-			out = ogOperations.procrefresh(ogRest)
+			out = ogOperations.refresh(ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -261,11 +251,11 @@ class ogRest():
 			elif ("setup" in URI):
 				self.process_setup(client, request)
 			elif ("image/restore" in URI):
-				self.process_irestore(client, request)
+				self.process_imagerestore(client, request)
 			elif ("stop" in URI):
 				self.process_stop(client)
 			elif ("image/create" in URI):
-				self.process_icreate(client, request)
+				self.process_imagecreate(client, request)
 			elif ("refresh" in URI):
 				self.process_refresh(client)
 			else:
@@ -302,25 +292,25 @@ class ogRest():
 		threading.Thread(target=ogThread.execcmd, args=(client, request, self,)).start()
 
 	def process_session(self, client, request):
-		threading.Thread(target=ogThread.procsession, args=(client, request, self,)).start()
+		threading.Thread(target=ogThread.session, args=(client, request, self,)).start()
 
 	def process_software(self, client, request):
 		path = '/tmp/CSft-' + client.ip + '-' + request.getPartition()
-		threading.Thread(target=ogThread.procsoftware, args=(client, request, path, self,)).start()
+		threading.Thread(target=ogThread.software, args=(client, request, path, self,)).start()
 
 	def process_hardware(self, client):
 		path = '/tmp/Chrd-' + client.ip
-		threading.Thread(target=ogThread.prochardware, args=(client, path, self,)).start()
+		threading.Thread(target=ogThread.hardware, args=(client, path, self,)).start()
 
 	def process_schedule(self, client):
 		response = restResponse(ogResponses.OK)
 		client.send(response.get())
 
 	def process_setup(self, client, request):
-		threading.Thread(target=ogThread.procsetup, args=(client, request, self,)).start()
+		threading.Thread(target=ogThread.setup, args=(client, request, self,)).start()
 
-	def process_irestore(self, client, request):
-		threading.Thread(target=ogThread.procirestore, args=(client, request, self,)).start()
+	def process_imagerestore(self, client, request):
+		threading.Thread(target=ogThread.image_restore, args=(client, request, self,)).start()
 
 	def process_stop(self, client):
 		client.disconnect()
@@ -332,9 +322,9 @@ class ogRest():
 			self.terminated = True
 			sys.exit(0)
 
-	def process_icreate(self, client, request):
+	def process_imagecreate(self, client, request):
 		path = '/tmp/CSft-' + client.ip + '-' + request.getPartition()
-		threading.Thread(target=ogThread.procicreate, args=(client, path, request, self,)).start()
+		threading.Thread(target=ogThread.image_create, args=(client, path, request, self,)).start()
 
 	def process_refresh(self, client):
-		threading.Thread(target=ogThread.procrefresh, args=(client, self,)).start()
+		threading.Thread(target=ogThread.refresh, args=(client, self,)).start()
