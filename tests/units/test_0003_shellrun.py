@@ -14,7 +14,7 @@ class TestShellRunMethods(unittest.TestCase):
 
     def test_post_with_echo(self):
         req_json = '{"run":"echo \\"croqueta\\"", "echo":true}'
-        response_json = '{"out": "\\"croqueta\\"\\n"}'
+        response_json = '{"out": \"croqueta\\n\"}'
         req = 'POST /shell/run HTTP/1.0\r\nContent-Length:'+ \
               str(len(req_json)) + \
               '\r\nContent-Type:application/json\r\n\r\n' + req_json

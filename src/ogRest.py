@@ -62,7 +62,7 @@ class restResponse():
 
 class ogThread():
 	def execcmd(client, request, ogRest):
-		if request.getrun() == None:
+		if not request.getrun():
 			response = restResponse(ogResponses.BAD_REQUEST)
 			client.send(response.get())
 			return
