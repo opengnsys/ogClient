@@ -131,9 +131,9 @@ class ogThread():
 
 		jsonResp = jsonResponse()
 		f = open(path, "r")
-		lines = f.readlines()
+		text = f.read()
 		f.close()
-		jsonResp.addElement('hardware', lines[0])
+		jsonResp.addElement('hardware', text)
 
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())

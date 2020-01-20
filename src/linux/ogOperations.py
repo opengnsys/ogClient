@@ -84,7 +84,10 @@ def software(request, path, ogRest):
 
 def hardware(path, ogRest):
 	try:
-		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/InventarioHardware', path], stdout=subprocess.PIPE, shell=True)
+		cmd = [OG_PATH + 'interfaceAdm/InventarioHardware ' + path]
+		ogRest.proc = subprocess.Popen(cmd,
+					       stdout=subprocess.PIPE,
+					       shell=True)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
