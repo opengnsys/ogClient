@@ -15,6 +15,7 @@ class Server():
     _probe_msg = 'POST /probe HTTP/1.0\r\nContent-Length:'+ \
                  str(len(_probe_json)) + \
                  '\r\nContent-Type:application/json\r\n\r\n' + _probe_json
+    _recv_buffer_size = 16384
 
     def __init__(self, host='127.0.0.1', port=1234):
         self.host = host
@@ -40,7 +41,7 @@ class Server():
         self.conn.send(msg.encode())
 
     def recv(self):
-        return self.conn.recv(1024).decode('utf-8')
+        return self.conn.recv(self._recv_buffer_size).decode('utf-8')
 
     def stop(self):
         self.conn.close()

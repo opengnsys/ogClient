@@ -114,9 +114,9 @@ class ogThread():
 		jsonResp.addElement('partition', request.getPartition())
 
 		f = open(path, "r")
-		lines = f.readlines()
+		output = f.read()
 		f.close()
-		jsonResp.addElement('software', lines[0])
+		jsonResp.addElement('software', output)
 
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())
@@ -295,7 +295,7 @@ class ogRest():
 		threading.Thread(target=ogThread.session, args=(client, request, self,)).start()
 
 	def process_software(self, client, request):
-		path = '/tmp/CSft-' + client.ip + '-' + request.getPartition()
+		path = '/tmp/CSft-' + client.ip + '-' + str(request.getPartition())
 		threading.Thread(target=ogThread.software, args=(client, request, path, self,)).start()
 
 	def process_hardware(self, client):

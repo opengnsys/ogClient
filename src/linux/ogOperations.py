@@ -75,7 +75,13 @@ def software(request, path, ogRest):
 	partition = request.getPartition()
 
 	try:
-		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/InventarioSoftware', disk, partition, path], stdout=subprocess.PIPE, shell=True)
+		cmd = OG_PATH + 'interfaceAdm/InventarioSoftware '
+		cmd += str(disk) + ' '
+		cmd += str(partition) + ' '
+		cmd += path
+		ogRest.proc = subprocess.Popen([cmd],
+					       stdout=subprocess.PIPE,
+					       shell=True)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
