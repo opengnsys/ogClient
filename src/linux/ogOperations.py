@@ -162,11 +162,11 @@ def image_create(path, request, ogRest):
 	return output.decode('utf-8')
 
 def refresh(ogRest):
-	listConfigs = []
-	disk = -1;
-
 	try:
-		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/getConfiguration'], stdout=subprocess.PIPE, shell=True)
+		cmd = OG_PATH + 'interfaceAdm/getConfiguration'
+		ogRest.proc = subprocess.Popen([cmd],
+					       stdout=subprocess.PIPE,
+					       shell=True)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')

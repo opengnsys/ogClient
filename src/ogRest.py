@@ -232,6 +232,8 @@ class ogRest():
 				self.process_hardware(client)
 			elif ("run/schedule" in URI):
 				self.process_schedule(client)
+			elif "refresh" in URI:
+				self.process_refresh(client)
 			else:
 				response = restResponse(ogResponses.BAD_REQUEST)
 				client.send(response.get())
@@ -256,8 +258,6 @@ class ogRest():
 				self.process_stop(client)
 			elif ("image/create" in URI):
 				self.process_imagecreate(client, request)
-			elif ("refresh" in URI):
-				self.process_refresh(client)
 			else:
 				response = restResponse(ogResponses.BAD_REQUEST)
 				client.send(response.get())
