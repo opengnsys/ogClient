@@ -13,8 +13,8 @@ import unittest
 class TestProbeMethods(unittest.TestCase):
 
     def setUp(self):
-        self.ok_response = 'HTTP/1.0 200 OK\r\nContent-Length:17\r\n' \
-                           'Content-Type:application/json\r\n\r\n' + \
+        self.ok_response = 'HTTP/1.0 200 OK\r\nContent-Length: 17\r\n' \
+                           'Content-Type: application/json\r\n\r\n' + \
                            '{"status": "OPG"}'
 
     def test_post(self):
@@ -29,7 +29,7 @@ class TestProbeMethods(unittest.TestCase):
         c = Client()
         s = Server()
         s.connect(probe=False)
-        s.send('POST /probe HTTP/1.0\r\nContent-Length:0\r\n\r\n')
+        s.send('POST /probe HTTP/1.0\r\nContent-Length: 0\r\n\r\n')
         response = s.recv()
         s.stop()
         c.stop()
@@ -38,8 +38,8 @@ class TestProbeMethods(unittest.TestCase):
     def test_malformed_json(self):
         json = '{"id": 0, "name": "test_local", "center": 0}'
         len_json = str(len(json))
-        msg = 'POST /probe HTTP/1.0\r\nContent-Length:' + len_json + \
-              '\r\nContent-Type:application/json\r\n\r\n' + json
+        msg = 'POST /probe HTTP/1.0\r\nContent-Length: ' + len_json + \
+              '\r\nContent-Type: application/json\r\n\r\n' + json
         c = Client()
         s = Server()
         s.connect(probe=False)
@@ -64,8 +64,8 @@ class TestProbeMethods(unittest.TestCase):
         json = '{"id": 0, "name": "test_local", "center": 0, "room": 0, ' + \
                '"extra_param": true}'
         len_json = str(len(json))
-        msg = 'POST /probe HTTP/1.0\r\nContent-Length:' + len_json + \
-              '\r\nContent-Type:application/json\r\n\r\n' + json
+        msg = 'POST /probe HTTP/1.0\r\nContent-Length: ' + len_json + \
+              '\r\nContent-Type: application/json\r\n\r\n' + json
         c = Client()
         s = Server()
         s.connect(probe=False)

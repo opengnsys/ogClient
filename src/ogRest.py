@@ -50,8 +50,8 @@ class restResponse():
 		self.msg += '\r\n'
 
 		if jsonResp:
-			self.msg += 'Content-Length:' + str(len(jsonResp.dumpMsg()))
-			self.msg += '\r\nContent-Type:application/json'
+			self.msg += 'Content-Length: ' + str(len(jsonResp.dumpMsg()))
+			self.msg += '\r\nContent-Type: application/json'
 			self.msg += '\r\n\r\n' + jsonResp.dumpMsg()
 		else:
 			self.msg += '\r\n'

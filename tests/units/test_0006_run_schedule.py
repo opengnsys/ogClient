@@ -13,8 +13,8 @@ import unittest
 class TestRunScheduleMethods(unittest.TestCase):
 
     def test_get(self):
-        req = 'GET /run/schedule HTTP/1.0\r\nContent-Length:0'+ \
-              '\r\nContent-Type:application/json\r\n\r\n'
+        req = 'GET /run/schedule HTTP/1.0\r\nContent-Length: 0'+ \
+              '\r\nContent-Type: application/json\r\n\r\n'
         c = Client()
         s = Server()
         s.connect()

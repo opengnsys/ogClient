@@ -15,12 +15,12 @@ class TestShellRunMethods(unittest.TestCase):
     def test_post_with_echo(self):
         req_json = '{"run":"echo \\"croqueta\\"", "echo":true}'
         response_json = '{"out": \"croqueta\\n\"}'
-        req = 'POST /shell/run HTTP/1.0\r\nContent-Length:'+ \
+        req = 'POST /shell/run HTTP/1.0\r\nContent-Length: '+ \
               str(len(req_json)) + \
-              '\r\nContent-Type:application/json\r\n\r\n' + req_json
-        resp = 'HTTP/1.0 200 OK\r\nContent-Length:' + \
+              '\r\nContent-Type: application/json\r\n\r\n' + req_json
+        resp = 'HTTP/1.0 200 OK\r\nContent-Length: ' + \
                str(len(response_json)) + \
-               '\r\nContent-Type:application/json\r\n\r\n' + response_json
+               '\r\nContent-Type: application/json\r\n\r\n' + response_json
         c = Client()
         s = Server()
         s.connect()
@@ -32,9 +32,9 @@ class TestShellRunMethods(unittest.TestCase):
 
     def test_post_without_echo(self):
         req_json = '{"run":"echo 1", "echo":false}'
-        req = 'POST /shell/run HTTP/1.0\r\nContent-Length:'+ \
+        req = 'POST /shell/run HTTP/1.0\r\nContent-Length: '+ \
               str(len(req_json)) + \
-              '\r\nContent-Type:application/json\r\n\r\n' + req_json
+              '\r\nContent-Type: application/json\r\n\r\n' + req_json
         resp = 'HTTP/1.0 200 OK\r\n\r\n'
         c = Client()
         s = Server()
@@ -49,7 +49,7 @@ class TestShellRunMethods(unittest.TestCase):
         c = Client()
         s = Server()
         s.connect()
-        s.send('POST /shell/run HTTP/1.0\r\nContent-Length:0\r\n\r\n')
+        s.send('POST /shell/run HTTP/1.0\r\nContent-Length: 0\r\n\r\n')
         response = s.recv()
         s.stop()
         c.stop()
@@ -58,8 +58,8 @@ class TestShellRunMethods(unittest.TestCase):
     def test_malformed_json(self):
         json = '{"wrong_param": 0}'
         len_json = str(len(json))
-        msg = 'POST /shell/run HTTP/1.0\r\nContent-Length:' + len_json + \
-              '\r\nContent-Type:application/json\r\n\r\n' + json
+        msg = 'POST /shell/run HTTP/1.0\r\nContent-Length: ' + len_json + \
+              '\r\nContent-Type: application/json\r\n\r\n' + json
         c = Client()
         s = Server()
         s.connect()
@@ -71,17 +71,17 @@ class TestShellRunMethods(unittest.TestCase):
 
     def test_serial_requests(self):
         req1_json = '{"run":"echo 1", "echo":true}'
-        req1 = 'POST /shell/run HTTP/1.0\r\nContent-Length:'+ \
+        req1 = 'POST /shell/run HTTP/1.0\r\nContent-Length: '+ \
                str(len(req1_json)) + \
-               '\r\nContent-Type:application/json\r\n\r\n' + req1_json
+               '\r\nContent-Type: application/json\r\n\r\n' + req1_json
         req2_json = '{"run":"echo 2", "echo":true}'
-        req2 = 'POST /shell/run HTTP/1.0\r\nContent-Length:'+ \
+        req2 = 'POST /shell/run HTTP/1.0\r\nContent-Length: '+ \
                str(len(req2_json)) + \
-               '\r\nContent-Type:application/json\r\n\r\n' + req2_json
+               '\r\nContent-Type: application/json\r\n\r\n' + req2_json
         response_json = '{"out": "2\n"}'
-        resp = 'HTTP/1.0 200 OK\r\nContent-Length:' + \
+        resp = 'HTTP/1.0 200 OK\r\nContent-Length: ' + \
                str(len(response_json)) + \
-               '\r\nContent-Type:application/json\r\n\r\n' + response_json
+               '\r\nContent-Type: application/json\r\n\r\n' + response_json
         c = Client()
         s = Server()
         s.connect()

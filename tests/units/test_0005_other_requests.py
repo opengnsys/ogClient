@@ -14,9 +14,9 @@ class TestOtherRequests(unittest.TestCase):
 
     def test_non_existent_function(self):
         post_req = 'POST /this_function_does_not_exist HTTP/1.0\r\n' + \
-                   'Content-Length:0\r\nContent-Type:application/json\r\n\r\n'
+                   'Content-Length: 0\r\nContent-Type: application/json\r\n\r\n'
         get_req = 'GET /this_function_does_not_exist HTTP/1.0\r\n' + \
-                  'Content-Length:0\r\nContent-Type:application/json\r\n\r\n'
+                  'Content-Length: 0\r\nContent-Type: application/json\r\n\r\n'
         c = Client()
         s = Server()
         s.connect()

@@ -15,9 +15,9 @@ class TestSoftwareMethods(unittest.TestCase):
 
     def test_correct_post(self):
         req_json = '{"disk": 1, "partition": 1}'
-        req = 'POST /software HTTP/1.0\r\nContent-Length:' + \
+        req = 'POST /software HTTP/1.0\r\nContent-Length: ' + \
               str(len(req_json)) + \
-              '\r\nContent-Type:application/json\r\n\r\n' + req_json
+              '\r\nContent-Type: application/json\r\n\r\n' + req_json
         c = Client()
         s = Server()
         s.connect()

@@ -14,8 +14,8 @@ import json
 class TestHardwareMethods(unittest.TestCase):
 
     def test_get(self):
-        req = 'GET /hardware HTTP/1.0\r\nContent-Length:0\r\n' + \
-              'Content-Type:application/json\r\n\r\n '
+        req = 'GET /hardware HTTP/1.0\r\nContent-Length: 0\r\n' + \
+              'Content-Type: application/json\r\n\r\n '
         c = Client()
         s = Server()
         s.connect()

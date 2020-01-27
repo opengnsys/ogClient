@@ -12,9 +12,9 @@ import sys
 class Server():
 
     _probe_json = '{"id": 0, "name": "test_local", "center": 0, "room": 0}'
-    _probe_msg = 'POST /probe HTTP/1.0\r\nContent-Length:'+ \
+    _probe_msg = 'POST /probe HTTP/1.0\r\nContent-Length: '+ \
                  str(len(_probe_json)) + \
-                 '\r\nContent-Type:application/json\r\n\r\n' + _probe_json
+                 '\r\nContent-Type: application/json\r\n\r\n' + _probe_json
     _recv_buffer_size = 16384
 
     def __init__(self, host='127.0.0.1', port=1234):
