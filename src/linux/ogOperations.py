@@ -12,28 +12,29 @@ import subprocess
 OG_PATH = '/opt/opengnsys/'
 
 def parseGetConf(out):
-	listConfigs = []
-	disk = -1;
-
+	parsed = {'serial_number': '',
+		  'disk_setup': '',
+		  'partition_setup': list()}
 	configs = out.split('\n')
-	configs = filter(None, configs)
-	for item in configs:
-		i = 0
-		json = {}
-		val = item.rstrip().split('\t')
-		while i < len(val):
-			val[i] = val[i].split('=')[1]
-			i += 1
-
-		json['partition'] = val[1]
-		json['code'] = val[4]
-		json['filesystem'] = val[2]
-		json['size'] = val[5]
-		json['format'] = val[6]
-		disk = val[0]
-		listConfigs.append(json)
-
-	return [disk, listConfigs]
+	for line in configs[:-1]:
+		if 'ser=' in line:
+			parsed['serial_number'] = line.partition('ser=')[2]
+		else:
+			part_setup = {}
+			params = dict(param.split('=') for param in line.split('\t'))
+			# Parse partition configuration.
+			part_setup['disk'] = params['disk']
+			part_setup['partition'] = params['par']
+			part_setup['code'] = params['cpt']
+			part_setup['filesystem'] = params['fsi']
+			part_setup['os'] = params['soi']
+			part_setup['size'] = params['tam']
+			part_setup['used_size'] = params['uso']
+			if part_setup['partition'] == '0':
+				parsed['disk_setup'] = part_setup
+			else:
+				parsed['partition_setup'].append(part_setup)
+	return parsed
 
 def poweroff():
 	if os.path.exists('/scripts/oginit'):

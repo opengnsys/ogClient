@@ -22,8 +22,11 @@ if platform.system() == 'Linux':
 	from src.linux import ogOperations
 
 class jsonResponse():
-	def __init__(self):
-		self.jsontree = {}
+	def __init__(self, dictionary=None):
+		if dictionary:
+			self.jsontree = dictionary
+		else:
+			self.jsontree = {}
 
 	def addElement(self, key, value):
 		self.jsontree[key] = value
@@ -199,9 +202,7 @@ class ogThread():
 			client.send(response.get())
 			return
 
-		jsonResp = jsonResponse()
-		jsonResp.addElement('disk', out[0])
-		jsonResp.addElement('partition_setup', out[1])
+		jsonResp = jsonResponse(out)
 
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())

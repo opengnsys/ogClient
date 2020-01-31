@@ -98,7 +98,7 @@ class restRequest:
 			if "id" in body:
 				self.id = json_param["id"]
 
-			if "code" in body:
+			if "code" in json_param:
 				self.code = json_param["code"]
 
 	def getHeaderLine(self):
