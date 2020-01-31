@@ -107,20 +107,27 @@ def setup(request, ogRest):
 	cachesize = request.getCacheSize()
 	partlist = request.getPartitionSetup()
 	listConfigs = []
+	cfg = 'dis=' + disk + '*che=' + cache + '*tch=' + cachesize + '!'
 
 	for part in partlist:
-		cfg = 'dis=' + disk + '*che=' + cache + '*tch=' + cachesize + '!par=' + part["partition"] + '*cpt='+part["code"] + '*sfi=' + part['filesystem'] + '*tam=' + part['size'] + '*ope=' + part['format'] + '%'
+		cfg += 'par=' + part["partition"] + '*cpt='+part["code"] + \
+		       '*sfi=' + part['filesystem'] + '*tam=' + \
+		       part['size'] + '*ope=' + part['format'] + '%'
 		if ogRest.terminated:
 			break
 
-		try:
-			ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/Configurar', disk, cfg], stdout=subprocess.PIPE, shell=True)
-			(output, error) = ogRest.proc.communicate()
-		except:
-			continue
+	cmd = OG_PATH + 'interfaceAdm/Configurar' + " " + disk + " " + cfg
+	try:
+		ogRest.proc = subprocess.Popen([cmd],
+					       stdout=subprocess.PIPE,
+					       shell=True)
+		(output, error) = ogRest.proc.communicate()
+	except:
+		raise ValueError('Error: Incorrect command value')
 
-	result = subprocess.check_output([OG_PATH + 'interfaceAdm/getConfiguration'], shell=True)
-	return parseGetConf(result.decode('utf-8'))[1]
+	cmd_get_conf = OG_PATH + 'interfaceAdm/getConfiguration'
+	result = subprocess.check_output([cmd_get_conf], shell=True)
+	return parseGetConf(result.decode('utf-8'))
 
 def image_restore(request, ogRest):
 	disk = request.getDisk()

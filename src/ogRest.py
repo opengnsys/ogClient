@@ -142,20 +142,14 @@ class ogThread():
 		client.send(response.get())
 
 	def setup(client, request, ogRest):
-		listconfig = []
-
 		try:
-			listconfig = ogOperations.setup(request, ogRest)
+			out = ogOperations.setup(request, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
 			return
 
-		jsonResp = jsonResponse()
-		jsonResp.addElement('disk', request.getDisk())
-		jsonResp.addElement('cache', request.getCache())
-		jsonResp.addElement('cache_size', request.getCacheSize())
-		jsonResp.addElement('partition_setup', listconfig)
+		jsonResp = jsonResponse(out)
 
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())
