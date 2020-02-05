@@ -113,7 +113,6 @@ class ogThread():
 			return
 
 		jsonResp = jsonResponse()
-		jsonResp.addElement('disk', request.getDisk())
 		jsonResp.addElement('partition', request.getPartition())
 
 		f = open(path, "r")
@@ -180,10 +179,8 @@ class ogThread():
 		jsonResp.addElement('id', request.getId())
 		jsonResp.addElement('name', request.getName())
 		jsonResp.addElement('repository', request.getRepo())
-		f = open(path, "r")
-		lines = f.readlines()
-		f.close()
-		jsonResp.addElement('software', lines[0])
+		with open(path, 'r') as f:
+			jsonResp.addElement('software', f.read())
 
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())

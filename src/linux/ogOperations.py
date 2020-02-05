@@ -151,9 +151,15 @@ def image_create(path, request, ogRest):
 	partition = request.getPartition()
 	name = request.getName()
 	repo = request.getRepo()
+	cmd_software = f'{OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
+		       f'{partition} {path}'
+	cmd_create_image = f'{OG_PATH}interfaceAdm/CrearImagen {disk} ' \
+			   f'{partition} {name} {repo}'
 
 	try:
-		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/InventarioSoftware', disk, partition, path], stdout=subprocess.PIPE, shell=True)
+		ogRest.proc = subprocess.Popen([cmd_software],
+					       stdout=subprocess.PIPE,
+					       shell=True)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
@@ -162,7 +168,9 @@ def image_create(path, request, ogRest):
 		return
 
 	try:
-		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/CrearImagen', disk, partition, name, repo], stdout=subprocess.PIPE, shell=True)
+		ogRest.proc = subprocess.Popen([cmd_create_image],
+					       stdout=subprocess.PIPE,
+					       shell=True)
 		ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
