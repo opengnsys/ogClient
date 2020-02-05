@@ -114,11 +114,8 @@ class ogThread():
 
 		jsonResp = jsonResponse()
 		jsonResp.addElement('partition', request.getPartition())
-
-		f = open(path, "r")
-		output = f.read()
-		f.close()
-		jsonResp.addElement('software', output)
+		with open(path, 'r') as f:
+			jsonResp.addElement('software', f.read())
 
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())
@@ -132,10 +129,8 @@ class ogThread():
 			return
 
 		jsonResp = jsonResponse()
-		f = open(path, "r")
-		text = f.read()
-		f.close()
-		jsonResp.addElement('hardware', text)
+		with open(path, 'r') as f:
+			jsonResp.addElement('hardware', f.read())
 
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())
