@@ -62,9 +62,12 @@ def execCMD(request, ogRest):
 def session(request, ogRest):
 	disk = request.getDisk()
 	partition = request.getPartition()
+	cmd = f'{OG_PATH}interfaceAdm/IniciarSesion {disk} {partition}'
 
 	try:
-		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/IniciarSesion', disk, partition], stdout=subprocess.PIPE, shell=True)
+		ogRest.proc = subprocess.Popen([cmd],
+					       stdout=subprocess.PIPE,
+					       shell=True)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
