@@ -79,10 +79,9 @@ def software(request, path, ogRest):
 	partition = request.getPartition()
 
 	try:
-		cmd = OG_PATH + 'interfaceAdm/InventarioSoftware '
-		cmd += str(disk) + ' '
-		cmd += str(partition) + ' '
-		cmd += path
+		cmd = f'{OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
+		      f'{partition} {path}'
+
 		ogRest.proc = subprocess.Popen([cmd],
 					       stdout=subprocess.PIPE,
 					       shell=True)
@@ -94,8 +93,8 @@ def software(request, path, ogRest):
 
 def hardware(path, ogRest):
 	try:
-		cmd = [OG_PATH + 'interfaceAdm/InventarioHardware ' + path]
-		ogRest.proc = subprocess.Popen(cmd,
+		cmd = f'{OG_PATH}interfaceAdm/InventarioHardware {path}'
+		ogRest.proc = subprocess.Popen([cmd],
 					       stdout=subprocess.PIPE,
 					       shell=True)
 		(output, error) = ogRest.proc.communicate()
@@ -107,19 +106,19 @@ def hardware(path, ogRest):
 def setup(request, ogRest):
 	disk = request.getDisk()
 	cache = request.getCache()
-	cachesize = request.getCacheSize()
+	cache_size = request.getCacheSize()
 	partlist = request.getPartitionSetup()
-	listConfigs = []
-	cfg = 'dis=' + disk + '*che=' + cache + '*tch=' + cachesize + '!'
+	cfg = f'dis={disk}*che={cache}*tch={cache_size}!'
 
 	for part in partlist:
-		cfg += 'par=' + part["partition"] + '*cpt='+part["code"] + \
-		       '*sfi=' + part['filesystem'] + '*tam=' + \
-		       part['size'] + '*ope=' + part['format'] + '%'
+		cfg += f'par={part["partition"]}*cpt={part["code"]}*' \
+		       f'sfi={part["filesystem"]}*tam={part["size"]}*' \
+		       f'ope={part["format"]}%'
+
 		if ogRest.terminated:
 			break
 
-	cmd = OG_PATH + 'interfaceAdm/Configurar' + " " + disk + " " + cfg
+	cmd = f'{OG_PATH}interfaceAdm/Configurar {disk} {cfg}'
 	try:
 		ogRest.proc = subprocess.Popen([cmd],
 					       stdout=subprocess.PIPE,
@@ -186,7 +185,7 @@ def image_create(path, request, ogRest):
 
 def refresh(ogRest):
 	try:
-		cmd = OG_PATH + 'interfaceAdm/getConfiguration'
+		cmd = f'{OG_PATH}interfaceAdm/getConfiguration'
 		ogRest.proc = subprocess.Popen([cmd],
 					       stdout=subprocess.PIPE,
 					       shell=True)
