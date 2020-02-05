@@ -137,9 +137,13 @@ def image_restore(request, ogRest):
 	ctype = request.getType()
 	profile = request.getProfile()
 	cid = request.getId()
+	cmd = f'{OG_PATH}interfaceAdm/RestaurarImagen {disk} {partition} ' \
+	      f'{name} {repo} {ctype}'
 
 	try:
-		ogRest.proc = subprocess.Popen([OG_PATH + 'interfaceAdm/RestaurarImagen', disk, partition, name, repo, ctype], stdout=subprocess.PIPE, shell=True)
+		ogRest.proc = subprocess.Popen([cmd],
+                                               stdout=subprocess.PIPE,
+                                               shell=True)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')

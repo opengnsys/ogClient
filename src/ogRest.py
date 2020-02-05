@@ -161,6 +161,11 @@ class ogThread():
 			client.send(response.get())
 			return
 
+		jsonResp = jsonResponse()
+		jsonResp.addElement('disk', request.getDisk())
+		jsonResp.addElement('partition', request.getPartition())
+		jsonResp.addElement('image_id', request.getId())
+
 		response = restResponse(ogResponses.OK, jsonResp)
 		client.send(response.get())
 
