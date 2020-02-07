@@ -10,6 +10,7 @@ import os
 import subprocess
 
 OG_PATH = '/opt/opengnsys/'
+OG_SHELL = '/bin/bash'
 
 def parseGetConf(out):
 	parsed = {'serial_number': '',
@@ -38,13 +39,17 @@ def parseGetConf(out):
 
 def poweroff():
 	if os.path.exists('/scripts/oginit'):
-		subprocess.call('source ' + OG_PATH + 'etc/preinit/loadenviron.sh; ' + OG_PATH + 'scripts/poweroff', shell=True)
+		cmd = f'source {OG_PATH}etc/preinit/loadenviron.sh; ' \
+		      f'{OG_PATH}scripts/poweroff'
+		subprocess.call([cmd], shell=True, executable=OG_SHELL)
 	else:
 		subprocess.call(['/sbin/poweroff'])
 
 def reboot():
 	if os.path.exists('/scripts/oginit'):
-		subprocess.call('source ' + OG_PATH + 'etc/preinit/loadenviron.sh; ' + OG_PATH + 'scripts/reboot', shell=True)
+		cmd = f'source {OG_PATH}etc/preinit/loadenviron.sh; ' \
+		      f'{OG_PATH}scripts/reboot'
+		subprocess.call([cmd], shell=True, executable=OG_SHELL)
 	else:
 		subprocess.call(['/sbin/reboot'])
 
@@ -52,7 +57,10 @@ def execCMD(request, ogRest):
 	cmd = request.getrun()
 	cmds = cmd.split(";|\n")
 	try:
-		ogRest.proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, shell=True)
+		ogRest.proc = subprocess.Popen(cmds,
+					       stdout=subprocess.PIPE,
+					       shell=True,
+					       executable=OG_SHELL)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
@@ -67,7 +75,8 @@ def session(request, ogRest):
 	try:
 		ogRest.proc = subprocess.Popen([cmd],
 					       stdout=subprocess.PIPE,
-					       shell=True)
+					       shell=True,
+					       executable=OG_SHELL)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
@@ -84,7 +93,8 @@ def software(request, path, ogRest):
 
 		ogRest.proc = subprocess.Popen([cmd],
 					       stdout=subprocess.PIPE,
-					       shell=True)
+					       shell=True,
+					       executable=OG_SHELL)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
@@ -96,7 +106,8 @@ def hardware(path, ogRest):
 		cmd = f'{OG_PATH}interfaceAdm/InventarioHardware {path}'
 		ogRest.proc = subprocess.Popen([cmd],
 					       stdout=subprocess.PIPE,
-					       shell=True)
+					       shell=True,
+					       executable=OG_SHELL)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
@@ -122,7 +133,8 @@ def setup(request, ogRest):
 	try:
 		ogRest.proc = subprocess.Popen([cmd],
 					       stdout=subprocess.PIPE,
-					       shell=True)
+					       shell=True,
+					       executable=OG_SHELL)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
@@ -144,8 +156,9 @@ def image_restore(request, ogRest):
 
 	try:
 		ogRest.proc = subprocess.Popen([cmd],
-                                               stdout=subprocess.PIPE,
-                                               shell=True)
+					       stdout=subprocess.PIPE,
+					       shell=True,
+					       executable=OG_SHELL)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
@@ -165,7 +178,8 @@ def image_create(path, request, ogRest):
 	try:
 		ogRest.proc = subprocess.Popen([cmd_software],
 					       stdout=subprocess.PIPE,
-					       shell=True)
+					       shell=True,
+					       executable=OG_SHELL)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
@@ -176,7 +190,8 @@ def image_create(path, request, ogRest):
 	try:
 		ogRest.proc = subprocess.Popen([cmd_create_image],
 					       stdout=subprocess.PIPE,
-					       shell=True)
+					       shell=True,
+					       executable=OG_SHELL)
 		ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
@@ -188,7 +203,8 @@ def refresh(ogRest):
 		cmd = f'{OG_PATH}interfaceAdm/getConfiguration'
 		ogRest.proc = subprocess.Popen([cmd],
 					       stdout=subprocess.PIPE,
-					       shell=True)
+					       shell=True,
+					       executable=OG_SHELL)
 		(output, error) = ogRest.proc.communicate()
 	except:
 		raise ValueError('Error: Incorrect command value')
