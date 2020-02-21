@@ -12,21 +12,21 @@ class ogConfig:
 	def __init__(self):
 		self.parser = configparser.ConfigParser()
 
-	def parserFile(self, path):
+	def parser_file(self, path):
 		self.parser.read(path)
 		if len(self.parser.sections()) == 0:
 			return False
 
 		return True
 
-	def getSections(self):
+	def get_sections(self):
 		return self.parser.sections()
 
-	def getContainsSection(self, section):
+	def get_contains_section(self, section):
 		return section in self.parser
 
-	def getValueSection(self, section, key):
-		if (not self.getContainsSection(section)):
+	def get_value_section(self, section, key):
+		if (not self.get_contains_section(section)):
 			return ''
 
 		return self.parser[section][key]

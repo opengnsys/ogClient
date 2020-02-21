@@ -21,21 +21,21 @@ from src.restRequest import *
 if platform.system() == 'Linux':
 	from src.linux import ogOperations
 
-class jsonResponse():
+class jsonBody():
 	def __init__(self, dictionary=None):
 		if dictionary:
 			self.jsontree = dictionary
 		else:
 			self.jsontree = {}
 
-	def addElement(self, key, value):
+	def add_element(self, key, value):
 		self.jsontree[key] = value
 
-	def dumpMsg(self):
+	def dump(self):
 		return json.dumps(self.jsontree)
 
 class restResponse():
-	def __init__(self, response, jsonResp=None):
+	def __init__(self, response, json_body=None):
 		self.msg = ''
 		if response == ogResponses.BAD_REQUEST:
 			self.msg = 'HTTP/1.0 400 Bad Request'
@@ -52,10 +52,10 @@ class restResponse():
 
 		self.msg += '\r\n'
 
-		if jsonResp:
-			self.msg += 'Content-Length: ' + str(len(jsonResp.dumpMsg()))
+		if json_body:
+			self.msg += 'Content-Length: ' + str(len(json_body.dump()))
 			self.msg += '\r\nContent-Type: application/json'
-			self.msg += '\r\n\r\n' + jsonResp.dumpMsg()
+			self.msg += '\r\n\r\n' + json_body.dump()
 		else:
 			self.msg += '\r\n'
 
@@ -78,9 +78,9 @@ class ogThread():
 			return
 
 		if request.getEcho():
-			jsonResp = jsonResponse()
-			jsonResp.addElement('out', shellout)
-			response = restResponse(ogResponses.OK, jsonResp)
+			json_body = jsonBody()
+			json_body.add_element('out', shellout)
+			response = restResponse(ogResponses.OK, json_body)
 			client.send(response.get())
 		else:
 			response = restResponse(ogResponses.OK)
@@ -112,12 +112,12 @@ class ogThread():
 			client.send(response.get())
 			return
 
-		jsonResp = jsonResponse()
-		jsonResp.addElement('partition', request.getPartition())
+		json_body = jsonBody()
+		json_body.add_element('partition', request.getPartition())
 		with open(path, 'r') as f:
-			jsonResp.addElement('software', f.read())
+			json_body.add_element('software', f.read())
 
-		response = restResponse(ogResponses.OK, jsonResp)
+		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
 
 	def hardware(client, path, ogRest):
@@ -128,11 +128,11 @@ class ogThread():
 			client.send(response.get())
 			return
 
-		jsonResp = jsonResponse()
+		json_body = jsonBody()
 		with open(path, 'r') as f:
-			jsonResp.addElement('hardware', f.read())
+			json_body.add_element('hardware', f.read())
 
-		response = restResponse(ogResponses.OK, jsonResp)
+		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
 
 	def setup(client, request, ogRest):
@@ -143,9 +143,9 @@ class ogThread():
 			client.send(response.get())
 			return
 
-		jsonResp = jsonResponse(out)
+		json_body = jsonBody(out)
 
-		response = restResponse(ogResponses.OK, jsonResp)
+		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
 
 	def image_restore(client, request, ogRest):
@@ -156,12 +156,12 @@ class ogThread():
 			client.send(response.get())
 			return
 
-		jsonResp = jsonResponse()
-		jsonResp.addElement('disk', request.getDisk())
-		jsonResp.addElement('partition', request.getPartition())
-		jsonResp.addElement('image_id', request.getId())
+		json_body = jsonBody()
+		json_body.add_element('disk', request.getDisk())
+		json_body.add_element('partition', request.getPartition())
+		json_body.add_element('image_id', request.getId())
 
-		response = restResponse(ogResponses.OK, jsonResp)
+		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
 
 	def image_create(client, path, request, ogRest):
@@ -172,17 +172,17 @@ class ogThread():
 			client.send(response.get())
 			return
 
-		jsonResp = jsonResponse()
-		jsonResp.addElement('disk', request.getDisk())
-		jsonResp.addElement('partition', request.getPartition())
-		jsonResp.addElement('code', request.getCode())
-		jsonResp.addElement('id', request.getId())
-		jsonResp.addElement('name', request.getName())
-		jsonResp.addElement('repository', request.getRepo())
+		json_body = jsonBody()
+		json_body.add_element('disk', request.getDisk())
+		json_body.add_element('partition', request.getPartition())
+		json_body.add_element('code', request.getCode())
+		json_body.add_element('id', request.getId())
+		json_body.add_element('name', request.getName())
+		json_body.add_element('repository', request.getRepo())
 		with open(path, 'r') as f:
-			jsonResp.addElement('software', f.read())
+			json_body.add_element('software', f.read())
 
-		response = restResponse(ogResponses.OK, jsonResp)
+		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
 
 	def refresh(client, ogRest):
@@ -193,9 +193,9 @@ class ogThread():
 			client.send(response.get())
 			return
 
-		jsonResp = jsonResponse(out)
+		json_body = jsonBody(out)
 
-		response = restResponse(ogResponses.OK, jsonResp)
+		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
 
 class ogResponses(Enum):
@@ -274,10 +274,10 @@ class ogRest():
 		threading.Thread(target=ogThread.poweroff).start()
 
 	def process_probe(self, client):
-		jsonResp = jsonResponse()
-		jsonResp.addElement('status', 'OPG')
+		json_body = jsonBody()
+		json_body.add_element('status', 'OPG')
 
-		response = restResponse(ogResponses.OK, jsonResp)
+		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
 
 	def process_shellrun(self, client, request):
