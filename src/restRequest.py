@@ -101,24 +101,6 @@ class restRequest:
 			if "code" in json_param:
 				self.code = json_param["code"]
 
-	def getHeaderLine(self):
-		return self.headersAlone
-
-	def getRequestLine(self):
-		return self.requestLine
-
-	def getHeaderParsed(self):
-		return self.headers
-
-	def getHost(self):
-		return self.host
-
-	def getContentType(self):
-		return self.contentType
-
-	def getContentLen(self):
-		return self.contentLen
-
 	def getRequestOP(self):
 		return self.operation
 
