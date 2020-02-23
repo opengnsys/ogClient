@@ -291,6 +291,20 @@ class ogRest():
 
 		return 0
 
+	def kill_process(self):
+		try:
+			os.kill(self.proc.pid, signal.SIGTERM)
+		except:
+			pass
+
+		time.sleep(2)
+		try:
+			os.kill(self.proc.pid, signal.SIGKILL)
+		except:
+			pass
+
+		self.state = ThreadState.IDLE
+
 	def process_reboot(self, client):
 		response = restResponse(ogResponses.IN_PROGRESS)
 		client.send(response.get())
@@ -298,10 +312,7 @@ class ogRest():
 		client.disconnect()
 
 		if self.state == ThreadState.BUSY:
-			os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
-			time.sleep(2)
-			os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
-			self.state = ThreadState.IDLE
+			self.kill_process()
 
 		threading.Thread(target=ogThread.reboot).start()
 
@@ -312,10 +323,7 @@ class ogRest():
 		client.disconnect()
 
 		if self.state == ThreadState.BUSY:
-			os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
-			time.sleep(2)
-			os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
-			self.state = ThreadState.IDLE
+			self.kill_process()
 
 		threading.Thread(target=ogThread.poweroff).start()
 
@@ -358,10 +366,7 @@ class ogRest():
 	def process_stop(self, client):
 		client.disconnect()
 		if self.state == ThreadState.BUSY:
-			os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
-			time.sleep(2)
-			os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
-			self.state = ThreadState.IDLE
+			self.kill_process()
 			self.terminated = True
 
 		sys.exit(0)
