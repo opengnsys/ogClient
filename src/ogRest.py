@@ -21,6 +21,10 @@ from src.restRequest import *
 if platform.system() == 'Linux':
 	from src.linux import ogOperations
 
+class ThreadState(Enum):
+	IDLE = 0
+	BUSY = 1
+
 class jsonBody():
 	def __init__(self, dictionary=None):
 		if dictionary:
@@ -47,6 +51,8 @@ class restResponse():
 			self.msg = 'HTTP/1.0 500 Internal Server Error'
 		elif response == ogResponses.UNAUTHORIZED:
 			self.msg = 'HTTP/1.0 401 Unauthorized'
+		elif response == ogResponses.SERVICE_UNAVAILABLE:
+			self.msg = 'HTTP/1.0 503 Service Unavailable'
 		else:
 			return self.msg
 
@@ -68,6 +74,7 @@ class ogThread():
 		if not request.getrun():
 			response = restResponse(ogResponses.BAD_REQUEST)
 			client.send(response.get())
+			ogRest.state = ThreadState.IDLE
 			return
 
 		try:
@@ -75,6 +82,7 @@ class ogThread():
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
+			ogRest.state = ThreadState.IDLE
 			return
 
 		if request.getEcho():
@@ -85,6 +93,8 @@ class ogThread():
 		else:
 			response = restResponse(ogResponses.OK)
 			client.send(response.get())
+
+		ogRest.state = ThreadState.IDLE
 
 	def poweroff():
 		time.sleep(2)
@@ -99,10 +109,12 @@ class ogThread():
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
+			ogRest.state = ThreadState.IDLE
 			return
 
 		response = restResponse(ogResponses.OK)
 		client.send(response.get())
+		ogRest.state = ThreadState.IDLE
 
 	def software(client, request, path, ogRest):
 		try:
@@ -110,6 +122,7 @@ class ogThread():
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
+			ogRest.state = ThreadState.IDLE
 			return
 
 		json_body = jsonBody()
@@ -119,6 +132,7 @@ class ogThread():
 
 		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
+		ogRest.state = ThreadState.IDLE
 
 	def hardware(client, path, ogRest):
 		try:
@@ -126,6 +140,7 @@ class ogThread():
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
+			ogRest.state = ThreadState.IDLE
 			return
 
 		json_body = jsonBody()
@@ -134,6 +149,7 @@ class ogThread():
 
 		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
+		ogRest.state = ThreadState.IDLE
 
 	def setup(client, request, ogRest):
 		try:
@@ -141,12 +157,14 @@ class ogThread():
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
+			ogRest.state = ThreadState.IDLE
 			return
 
 		json_body = jsonBody(out)
 
 		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
+		ogRest.state = ThreadState.IDLE
 
 	def image_restore(client, request, ogRest):
 		try:
@@ -154,6 +172,7 @@ class ogThread():
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
+			ogRest.state = ThreadState.IDLE
 			return
 
 		json_body = jsonBody()
@@ -163,6 +182,7 @@ class ogThread():
 
 		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
+		ogRest.state = ThreadState.IDLE
 
 	def image_create(client, path, request, ogRest):
 		try:
@@ -170,6 +190,7 @@ class ogThread():
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
+			ogRest.state = ThreadState.IDLE
 			return
 
 		json_body = jsonBody()
@@ -184,6 +205,7 @@ class ogThread():
 
 		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
+		ogRest.state = ThreadState.IDLE
 
 	def refresh(client, ogRest):
 		try:
@@ -191,12 +213,14 @@ class ogThread():
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
+			ogRest.state = ThreadState.IDLE
 			return
 
 		json_body = jsonBody(out)
 
 		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
+		ogRest.state = ThreadState.IDLE
 
 class ogResponses(Enum):
 	BAD_REQUEST=0
@@ -204,20 +228,28 @@ class ogResponses(Enum):
 	OK=2
 	INTERNAL_ERR=3
 	UNAUTHORIZED=4
+	SERVICE_UNAVAILABLE=5
 
 class ogRest():
 	def __init__(self):
 		self.proc = None
 		self.terminated = False
+		self.state = ThreadState.IDLE
 
 	def processOperation(self, request, client):
 		op = request.getRequestOP()
 		URI = request.getURI()
 
-		if (not "stop" in URI and not self.proc == None and self.proc.poll() == None):
-			response = restResponse(ogResponses.UNAUTHORIZED)
-			client.send(response.get())
-			return
+		if (not "stop" in URI and
+		    not "reboot" in URI and
+		    not "poweroff" in URI and
+		    not "probe" in URI):
+			if self.state == ThreadState.BUSY:
+				response = restResponse(ogResponses.SERVICE_UNAVAILABLE)
+				client.send(response.get())
+				return
+			else:
+				self.state = ThreadState.BUSY
 
 		if ("GET" in op):
 			if "hardware" in URI:
@@ -264,6 +296,13 @@ class ogRest():
 		client.send(response.get())
 
 		client.disconnect()
+
+		if self.state == ThreadState.BUSY:
+			os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+			time.sleep(2)
+			os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
+			self.state = ThreadState.IDLE
+
 		threading.Thread(target=ogThread.reboot).start()
 
 	def process_poweroff(self, client):
@@ -271,13 +310,25 @@ class ogRest():
 		client.send(response.get())
 
 		client.disconnect()
+
+		if self.state == ThreadState.BUSY:
+			os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+			time.sleep(2)
+			os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
+			self.state = ThreadState.IDLE
+
 		threading.Thread(target=ogThread.poweroff).start()
 
 	def process_probe(self, client):
 		json_body = jsonBody()
-		json_body.add_element('status', 'OPG')
 
-		response = restResponse(ogResponses.OK, json_body)
+		if self.state != ThreadState.BUSY:
+			json_body.add_element('status', 'OPG')
+			response = restResponse(ogResponses.OK, json_body)
+		else:
+			json_body.add_element('status', 'BSY')
+			response = restResponse(ogResponses.IN_PROGRESS, json_body)
+
 		client.send(response.get())
 
 	def process_shellrun(self, client, request):
@@ -306,13 +357,14 @@ class ogRest():
 
 	def process_stop(self, client):
 		client.disconnect()
-		if self.proc == None:
-			return
-
-		if self.proc.poll() == None:
+		if self.state == ThreadState.BUSY:
 			os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+			time.sleep(2)
+			os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
+			self.state = ThreadState.IDLE
 			self.terminated = True
-			sys.exit(0)
+
+		sys.exit(0)
 
 	def process_imagecreate(self, client, request):
 		path = '/tmp/CSft-' + client.ip + '-' + request.getPartition()
