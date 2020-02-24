@@ -6,6 +6,7 @@
 # Free Software Foundation, version 3.
 #
 
+import subprocess
 from src.ogClient import *
 from src.ogConfig import *
 from signal import signal, SIGPIPE, SIG_DFL
@@ -19,6 +20,9 @@ def main():
 
 	ip = ogconfig.get_value_section('opengnsys', 'ip')
 	port = ogconfig.get_value_section('opengnsys', 'port')
+	url = ogconfig.get_value_section('opengnsys', 'url')
+
+	proc = subprocess.Popen(["browser", "-qws", url])
 
 	client = ogClient(ip, int(port))
 	client.connect()
