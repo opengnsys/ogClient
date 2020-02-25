@@ -55,7 +55,7 @@ def reboot():
 
 def execCMD(request, ogRest):
 	cmd = request.getrun()
-	cmds = cmd.split(";|\n")
+	cmds = cmd.split(";|\n\r")
 	try:
 		ogRest.proc = subprocess.Popen(cmds,
 					       stdout=subprocess.PIPE,
