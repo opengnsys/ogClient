@@ -236,8 +236,8 @@ class ogRest():
 		self.terminated = False
 		self.state = ThreadState.IDLE
 
-	def processOperation(self, request, client):
-		op = request.getRequestOP()
+	def process_request(self, request, client):
+		method = request.get_method()
 		URI = request.getURI()
 
 		if (not "stop" in URI and
@@ -251,7 +251,7 @@ class ogRest():
 			else:
 				self.state = ThreadState.BUSY
 
-		if ("GET" in op):
+		if ("GET" in method):
 			if "hardware" in URI:
 				self.process_hardware(client)
 			elif ("run/schedule" in URI):
@@ -261,7 +261,7 @@ class ogRest():
 			else:
 				response = restResponse(ogResponses.BAD_REQUEST)
 				client.send(response.get())
-		elif ("POST" in op):
+		elif ("POST" in method):
 			if ("poweroff" in URI):
 				self.process_poweroff(client)
 			elif "probe" in URI:

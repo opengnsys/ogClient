@@ -48,7 +48,7 @@ class restRequest:
 			self.contentLen = int(self.headers['Content-Length'])
 
 		if (not self.requestLine == None or not self.requestLine == ''):
-			self.operation = self.requestLine.split('/', 1)[0]
+			self.method = self.requestLine.split('/', 1)[0]
 			self.URI = self.requestLine.split('/', 1)[1]
 
 		if not self.contentLen == 0:
@@ -100,8 +100,8 @@ class restRequest:
 			if "code" in json_param:
 				self.code = json_param["code"]
 
-	def getRequestOP(self):
-		return self.operation
+	def get_method(self):
+		return self.method
 
 	def getURI(self):
 		return self.URI

@@ -98,7 +98,7 @@ class ogClient:
 
 		if self.trailer and len(self.data) >= self.content_len:
 			request.parser(self.data)
-			self.ogrest.processOperation(request, self)
+			self.ogrest.process_request(request, self)
 
 			# Cleanup state information from request
 			self.data = ""
