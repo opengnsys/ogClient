@@ -12,12 +12,12 @@ import json
 
 class restRequest:
 	def __init__(self):
-		self.requestLine = None
-		self.headersAlone = None
+		self.request_line = None
+		self.headers_alone = None
 		self.headers = None
 		self.host = None
-		self.contentType = None
-		self.contentLen = None
+		self.content_type = None
+		self.content_len = None
 		self.operation = None
 		self.URI = None
 		self.run = None
@@ -35,24 +35,24 @@ class restRequest:
 		self.code = None
 
 	def parser(self,data):
-		self.requestLine, self.headersAlone = data.split('\n', 1)
-		self.headers = email.message_from_file(StringIO(self.headersAlone))
+		self.request_line, self.headers_alone = data.split('\n', 1)
+		self.headers = email.message_from_file(StringIO(self.headers_alone))
 
 		if 'Host' in self.headers.keys():
 			self.host = self.headers['Host']
 
 		if 'Content-Type' in self.headers.keys():
-			self.contentType = self.headers['Content-Type']
+			self.content_type = self.headers['Content-Type']
 
 		if 'Content-Length' in self.headers.keys():
-			self.contentLen = int(self.headers['Content-Length'])
+			self.content_len = int(self.headers['Content-Length'])
 
-		if (not self.requestLine == None or not self.requestLine == ''):
-			self.method = self.requestLine.split('/', 1)[0]
-			self.URI = self.requestLine.split('/', 1)[1]
+		if (not self.request_line == None or not self.request_line == ''):
+			self.method = self.request_line.split('/', 1)[0]
+			self.URI = self.request_line.split('/', 1)[1]
 
-		if not self.contentLen == 0:
-			msgs = self.headersAlone.rstrip().split('\n')
+		if not self.content_len == 0:
+			msgs = self.headers_alone.rstrip().split('\n')
 			body = msgs[len(msgs) - 1]
 			try:
 				json_param = json.loads(body)
