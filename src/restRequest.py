@@ -60,42 +60,41 @@ class restRequest:
 				print ("Error: Json message incomplete")
 				return
 
-			if "run" in body:
+			if "run" in json_param:
 				self.run = json_param["run"]
 				try:
 					self.echo = json_param["echo"]
 				except:
 					pass
 
-			if "disk" in body:
+			if "disk" in json_param:
 				self.disk = json_param["disk"]
 
-			if "partition" in body:
-				if not "partition_setup" in body:
-					self.partition = json_param["partition"]
+			if "partition" in json_param:
+				self.partition = json_param["partition"]
 
-			if "cache" in body:
+			if "cache" in json_param:
 				self.cache = json_param["cache"]
 
-			if "cache_size" in body:
+			if "cache_size" in json_param:
 				self.cache_size = json_param["cache_size"]
 
-			if "partition_setup" in body:
+			if "partition_setup" in json_param:
 				self.partition_setup = json_param["partition_setup"]
 
-			if "name" in body:
+			if "name" in json_param:
 				self.name = json_param["name"]
 
-			if "repository" in body:
+			if "repository" in json_param:
 				self.repo = json_param["repository"]
 
-			if "type" in body:
+			if "type" in json_param:
 				self.type = json_param["type"]
 
-			if "profile" in body:
+			if "profile" in json_param:
 				self.profile = json_param["profile"]
 
-			if "id" in body:
+			if "id" in json_param:
 				self.id = json_param["id"]
 
 			if "code" in json_param:
