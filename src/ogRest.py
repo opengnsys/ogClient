@@ -63,7 +63,8 @@ class restResponse():
 			self.msg += '\r\nContent-Type: application/json'
 			self.msg += '\r\n\r\n' + json_body.dump()
 		else:
-			self.msg += '\r\n'
+			self.msg += 'Content-Length: 0\r\n' \
+				    'Content-Type: application/json\r\n\r\n'
 
 
 	def get(self):
