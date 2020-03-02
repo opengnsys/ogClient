@@ -357,6 +357,7 @@ class ogRest():
 	def process_schedule(self, client):
 		response = restResponse(ogResponses.OK)
 		client.send(response.get())
+		self.state = ThreadState.IDLE
 
 	def process_setup(self, client, request):
 		threading.Thread(target=ogThread.setup, args=(client, request, self,)).start()
