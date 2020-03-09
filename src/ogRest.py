@@ -71,7 +71,7 @@ class restResponse():
 		return self.msg
 
 class ogThread():
-	def execcmd(client, request, ogRest):
+	def shellrun(client, request, ogRest):
 		if not request.getrun():
 			response = restResponse(ogResponses.BAD_REQUEST)
 			client.send(response.get())
@@ -341,7 +341,7 @@ class ogRest():
 		client.send(response.get())
 
 	def process_shellrun(self, client, request):
-		threading.Thread(target=ogThread.execcmd, args=(client, request, self,)).start()
+		threading.Thread(target=ogThread.shellrun, args=(client, request, self,)).start()
 
 	def process_session(self, client, request):
 		threading.Thread(target=ogThread.session, args=(client, request, self,)).start()
