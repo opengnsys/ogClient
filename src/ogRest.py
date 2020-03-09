@@ -239,7 +239,7 @@ class ogRest():
 
 	def process_request(self, request, client):
 		method = request.get_method()
-		URI = request.getURI()
+		URI = request.get_uri()
 
 		if (not "stop" in URI and
 		    not "reboot" in URI and

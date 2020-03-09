@@ -103,7 +103,7 @@ class restRequest:
 	def get_method(self):
 		return self.method
 
-	def getURI(self):
+	def get_uri(self):
 		return self.URI
 
 	def getrun(self):
