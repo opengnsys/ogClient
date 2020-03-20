@@ -139,7 +139,7 @@ def setup(request, ogRest):
 	except:
 		raise ValueError('Error: Incorrect command value')
 
-	cmd_get_conf = OG_PATH + 'interfaceAdm/getConfiguration'
+	cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
 	result = subprocess.check_output([cmd_get_conf], shell=True)
 	return parseGetConf(result.decode('utf-8'))
 
