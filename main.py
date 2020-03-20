@@ -14,7 +14,8 @@ from signal import signal, SIGPIPE, SIG_DFL
 def main():
 	signal(SIGPIPE, SIG_DFL)
 	ogconfig = ogConfig()
-	if (not ogconfig.parser_file('cfg/ogagent.cfg')):
+	config_path = f'{ogConfig.OG_PATH}ogClient/cfg/ogagent.cfg'
+	if (not ogconfig.parser_file(config_path)):
 		print ('Error: Parsing configuration file')
 		return 0
 

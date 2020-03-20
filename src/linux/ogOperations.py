@@ -8,8 +8,8 @@
 
 import os
 import subprocess
+from src.ogConfig import *
 
-OG_PATH = '/opt/opengnsys/'
 OG_SHELL = '/bin/bash'
 
 def parseGetConf(out):
@@ -39,16 +39,16 @@ def parseGetConf(out):
 
 def poweroff():
 	if os.path.exists('/scripts/oginit'):
-		cmd = f'source {OG_PATH}etc/preinit/loadenviron.sh; ' \
-		      f'{OG_PATH}scripts/poweroff'
+		cmd = f'source {ogConfig.OG_PATH}etc/preinit/loadenviron.sh; ' \
+		      f'{ogConfig.OG_PATH}scripts/poweroff'
 		subprocess.call([cmd], shell=True, executable=OG_SHELL)
 	else:
 		subprocess.call(['/sbin/poweroff'])
 
 def reboot():
 	if os.path.exists('/scripts/oginit'):
-		cmd = f'source {OG_PATH}etc/preinit/loadenviron.sh; ' \
-		      f'{OG_PATH}scripts/reboot'
+		cmd = f'source {ogConfig.OG_PATH}etc/preinit/loadenviron.sh; ' \
+		      f'{ogConfig.OG_PATH}scripts/reboot'
 		subprocess.call([cmd], shell=True, executable=OG_SHELL)
 	else:
 		subprocess.call(['/sbin/reboot'])
@@ -70,7 +70,7 @@ def execCMD(request, ogRest):
 def session(request, ogRest):
 	disk = request.getDisk()
 	partition = request.getPartition()
-	cmd = f'{OG_PATH}interfaceAdm/IniciarSesion {disk} {partition}'
+	cmd = f'{ogConfig.OG_PATH}interfaceAdm/IniciarSesion {disk} {partition}'
 
 	try:
 		ogRest.proc = subprocess.Popen([cmd],
@@ -88,7 +88,7 @@ def software(request, path, ogRest):
 	partition = request.getPartition()
 
 	try:
-		cmd = f'{OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
+		cmd = f'{ogConfig.OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
 		      f'{partition} {path}'
 
 		ogRest.proc = subprocess.Popen([cmd],
@@ -103,7 +103,7 @@ def software(request, path, ogRest):
 
 def hardware(path, ogRest):
 	try:
-		cmd = f'{OG_PATH}interfaceAdm/InventarioHardware {path}'
+		cmd = f'{ogConfig.OG_PATH}interfaceAdm/InventarioHardware {path}'
 		ogRest.proc = subprocess.Popen([cmd],
 					       stdout=subprocess.PIPE,
 					       shell=True,
@@ -129,7 +129,7 @@ def setup(request, ogRest):
 		if ogRest.terminated:
 			break
 
-	cmd = f'{OG_PATH}interfaceAdm/Configurar {disk} {cfg}'
+	cmd = f'{ogConfig.OG_PATH}interfaceAdm/Configurar {disk} {cfg}'
 	try:
 		ogRest.proc = subprocess.Popen([cmd],
 					       stdout=subprocess.PIPE,
@@ -151,7 +151,7 @@ def image_restore(request, ogRest):
 	ctype = request.getType()
 	profile = request.getProfile()
 	cid = request.getId()
-	cmd = f'{OG_PATH}interfaceAdm/RestaurarImagen {disk} {partition} ' \
+	cmd = f'{ogConfig.OG_PATH}interfaceAdm/RestaurarImagen {disk} {partition} ' \
 	      f'{name} {repo} {ctype}'
 
 	try:
@@ -170,9 +170,9 @@ def image_create(path, request, ogRest):
 	partition = request.getPartition()
 	name = request.getName()
 	repo = request.getRepo()
-	cmd_software = f'{OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
+	cmd_software = f'{ogConfig.OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
 		       f'{partition} {path}'
-	cmd_create_image = f'{OG_PATH}interfaceAdm/CrearImagen {disk} ' \
+	cmd_create_image = f'{ogConfig.OG_PATH}interfaceAdm/CrearImagen {disk} ' \
 			   f'{partition} {name} {repo}'
 
 	try:
@@ -200,7 +200,7 @@ def image_create(path, request, ogRest):
 
 def refresh(ogRest):
 	try:
-		cmd = f'{OG_PATH}interfaceAdm/getConfiguration'
+		cmd = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
 		ogRest.proc = subprocess.Popen([cmd],
 					       stdout=subprocess.PIPE,
 					       shell=True,

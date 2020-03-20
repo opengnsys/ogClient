@@ -9,6 +9,8 @@
 import configparser
 
 class ogConfig:
+	OG_PATH = '/opt/opengnsys/'
+
 	def __init__(self):
 		self.parser = configparser.ConfigParser()
 
