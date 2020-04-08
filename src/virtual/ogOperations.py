@@ -60,6 +60,7 @@ class OgVirtualOperations:
     def __init__(self):
         self.IP = '127.0.0.1'
         self.VIRTUAL_PORT = 4444
+        self.USABLE_DISK = 0.75
 
     def poweroff(self):
         qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
@@ -108,6 +109,7 @@ class OgVirtualOperations:
                         subprocess.run([f'mount /dev/nbd0p1 {temp_mount_dir}'],
                                        shell=True)
                         total_disk, used_disk, free_disk = shutil.disk_usage(temp_mount_dir)
+                        free_disk = int(free_disk * self.USABLE_DISK)
                         subprocess.run([f'umount {temp_mount_dir}'],
                                        shell=True)
                         subprocess.run(['qemu-nbd -d /dev/nbd0'],
@@ -119,6 +121,7 @@ class OgVirtualOperations:
                 f.truncate()
         except FileNotFoundError:
             total_disk, used_disk, free_disk = shutil.disk_usage("/")
+            free_disk = int(free_disk * self.USABLE_DISK)
             data = {'serial_number': '',
                     'disk_setup': {'disk': 1,
                                    'partition': 0,
