@@ -18,8 +18,8 @@ import signal
 
 from src.restRequest import *
 
-if platform.system() == 'Linux':
-	from src.linux import ogOperations
+from src.linux.ogOperations import OgLinuxOperations
+from src.virtual.ogOperations import OgVirtualOperations
 
 class ThreadState(Enum):
 	IDLE = 0
@@ -79,7 +79,7 @@ class ogThread():
 			return
 
 		try:
-			shellout = ogOperations.execCMD(request, ogRest)
+			shellout = ogRest.operations.execCMD(request, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -97,16 +97,16 @@ class ogThread():
 
 		ogRest.state = ThreadState.IDLE
 
-	def poweroff():
+	def poweroff(ogRest):
 		time.sleep(2)
-		ogOperations.poweroff()
+		ogRest.operations.poweroff()
 
-	def reboot():
-		ogOperations.reboot()
+	def reboot(ogRest):
+		ogRest.operations.reboot()
 
 	def session(client, request, ogRest):
 		try:
-			ogOperations.session(request, ogRest)
+			ogRest.operations.session(request, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -119,7 +119,7 @@ class ogThread():
 
 	def software(client, request, path, ogRest):
 		try:
-			ogOperations.software(request, path, ogRest)
+			ogRest.operations.software(request, path, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -137,7 +137,7 @@ class ogThread():
 
 	def hardware(client, path, ogRest):
 		try:
-			ogOperations.hardware(path, ogRest)
+			ogRest.operations.hardware(path, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -154,7 +154,7 @@ class ogThread():
 
 	def setup(client, request, ogRest):
 		try:
-			out = ogOperations.setup(request, ogRest)
+			out = ogRest.operations.setup(request, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -169,7 +169,7 @@ class ogThread():
 
 	def image_restore(client, request, ogRest):
 		try:
-			ogOperations.image_restore(request, ogRest)
+			ogRest.operations.image_restore(request, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -187,7 +187,7 @@ class ogThread():
 
 	def image_create(client, path, request, ogRest):
 		try:
-			ogOperations.image_create(path, request, ogRest)
+			ogRest.operations.image_create(path, request, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -210,7 +210,7 @@ class ogThread():
 
 	def refresh(client, ogRest):
 		try:
-			out = ogOperations.refresh(ogRest)
+			out = ogRest.operations.refresh(ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -232,10 +232,18 @@ class ogResponses(Enum):
 	SERVICE_UNAVAILABLE=5
 
 class ogRest():
-	def __init__(self):
+	def __init__(self, mode):
 		self.proc = None
 		self.terminated = False
 		self.state = ThreadState.IDLE
+		self.mode = mode
+
+		if self.mode == 'linux' and platform.system() == 'Linux':
+			self.operations = OgLinuxOperations()
+		elif self.mode == 'virtual':
+			self.operations = OgVirtualOperations()
+		else:
+			raise ValueError('Mode not supported.')
 
 	def process_request(self, request, client):
 		method = request.get_method()
@@ -315,7 +323,7 @@ class ogRest():
 		if self.state == ThreadState.BUSY:
 			self.kill_process()
 
-		threading.Thread(target=ogThread.reboot).start()
+		threading.Thread(target=ogThread.reboot, args=(self)).start()
 
 	def process_poweroff(self, client):
 		response = restResponse(ogResponses.IN_PROGRESS)
@@ -326,7 +334,7 @@ class ogRest():
 		if self.state == ThreadState.BUSY:
 			self.kill_process()
 
-		threading.Thread(target=ogThread.poweroff).start()
+		threading.Thread(target=ogThread.poweroff, args=(self)).start()
 
 	def process_probe(self, client):
 		json_body = jsonBody()

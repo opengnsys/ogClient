@@ -24,10 +24,11 @@ def main():
 	ip = ogconfig.get_value_section('opengnsys', 'ip')
 	port = ogconfig.get_value_section('opengnsys', 'port')
 	url = ogconfig.get_value_section('opengnsys', 'url')
+	mode = ogconfig.get_value_section('opengnsys', 'mode')
 
 	proc = subprocess.Popen(["browser", "-qws", url])
 
-	client = ogClient(ip, int(port))
+	client = ogClient(ip, int(port), mode)
 	client.connect()
 	client.run()
 

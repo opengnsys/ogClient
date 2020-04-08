@@ -23,10 +23,14 @@ class State(Enum):
 	FORCE_DISCONNECTED = 2
 
 class ogClient:
-	def __init__(self, ip, port):
+	def __init__(self, ip, port, mode):
+		if mode not in {'virtual', 'linux'}:
+			raise ValueError('Mode not supported.')
+
 		self.ip = ip
 		self.port = port
-		self.ogrest = ogRest()
+		self.mode = mode
+		self.ogrest = ogRest(self.mode)
 
 	def get_socket(self):
 		return self.sock
