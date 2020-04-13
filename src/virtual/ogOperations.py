@@ -80,6 +80,10 @@ class OgVirtualOperations:
         qmp.send(str({"execute": "system_reset"}))
         qmp.disconnect()
 
+    def execCMD(self, request, ogRest):
+        # TODO Implement.
+        raise NotImplementedError
+
     def session(self, request, ogRest):
         disk = request.getDisk()
         partition = request.getPartition()
