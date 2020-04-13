@@ -323,7 +323,7 @@ class ogRest():
 		if self.state == ThreadState.BUSY:
 			self.kill_process()
 
-		threading.Thread(target=ogThread.reboot, args=(self)).start()
+		threading.Thread(target=ogThread.reboot, args=(self,)).start()
 
 	def process_poweroff(self, client):
 		response = restResponse(ogResponses.IN_PROGRESS)
@@ -334,7 +334,7 @@ class ogRest():
 		if self.state == ThreadState.BUSY:
 			self.kill_process()
 
-		threading.Thread(target=ogThread.poweroff, args=(self)).start()
+		threading.Thread(target=ogThread.poweroff, args=(self,)).start()
 
 	def process_probe(self, client):
 		json_body = jsonBody()
