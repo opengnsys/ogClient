@@ -31,6 +31,7 @@ class ogClient:
 		self.port = port
 		self.mode = mode
 		self.ogrest = ogRest(self.mode)
+		self.logged = False
 
 	def get_socket(self):
 		return self.sock
@@ -39,7 +40,9 @@ class ogClient:
 		return self.state
 
 	def connect(self):
-		print ('connecting')
+		if not self.logged:
+			print('connecting')
+			self.logged = True
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sock.setblocking(0)
 		self.state = State.CONNECTING
@@ -49,13 +52,12 @@ class ogClient:
 
 		try:
 			self.sock.connect((self.ip, self.port))
+			self.logged = False
 		except socket.error as err:
 			if err.errno == errno.EINPROGRESS:
 				return
 			elif err.errno == errno.ECONNREFUSED:
 				return
-
-			print ('Error connect ' + str(err))
 
 	def send(self, msg):
 		self.sock.send(bytes(msg, 'utf-8'))
@@ -64,12 +66,17 @@ class ogClient:
 	def connect2(self):
 		try:
 			self.sock.connect((self.ip, self.port))
+			self.logged = False
 		except socket.error as err:
 			if err.errno == errno.EISCONN:
-				print ('connected')
+				if not self.logged:
+					print('connected')
+					self.logged = True
 				self.state = State.RECEIVING
 			else:
-				print ('connection refused, retrying...')
+				if not self.logged:
+					print('connection refused, retrying...')
+					self.logged = True
 				self.state = State.CONNECTING
 				self.sock.close()
 				self.connect()
@@ -77,9 +84,12 @@ class ogClient:
 	def receive(self):
 		try:
 			data = self.sock.recv(1024).decode('utf-8')
+			self.logged = False
 		except socket.error as err:
 			data = ''
-			print ('Error3 ' + str(err))
+			if not self.logged:
+				print('Error3 ' + str(err))
+				self.logged = True
 
 		if len(data) == 0:
 			self.state = State.CONNECTING
@@ -133,4 +143,4 @@ class ogClient:
 			elif state == State.RECEIVING and sock in readable:
 				self.receive()
 			else:
-				print ('bad state' + str(state))
+				print('bad state' + str(state))
