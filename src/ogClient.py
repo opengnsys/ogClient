@@ -125,6 +125,7 @@ class ogClient:
 
 	def run(self):
 		while 1:
+			time.sleep(1)
 			sock = self.get_socket()
 			state = self.get_state()
 
