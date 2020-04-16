@@ -79,6 +79,8 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
+        cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
+        result = subprocess.check_output([cmd_get_conf], shell=True)
         self._restartBrowser()
 
         return output.decode('utf-8')
@@ -181,6 +183,8 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
+        cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
+        result = subprocess.check_output([cmd_get_conf], shell=True)
         self._restartBrowser()
 
         return output.decode('utf-8')
