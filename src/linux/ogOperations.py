@@ -13,6 +13,19 @@ from src.ogConfig import *
 OG_SHELL = '/bin/bash'
 
 class OgLinuxOperations:
+
+    _ogconfig = ogConfig()
+    _config_path = f'{ogConfig.OG_PATH}ogclient/cfg/ogclient.cfg'
+    _ogconfig.parser_file(_config_path)
+    _url = _ogconfig.get_value_section('opengnsys', 'url')
+
+    def _restartBrowser(self):
+        try:
+            proc = subprocess.call(["pkill", "-9", "browser"])
+            proc = subprocess.Popen(["browser", "-qws", OgLinuxOperations._url])
+        except:
+            raise ValueError('Error: cannot restart browser')
+
     def parseGetConf(self, out):
         parsed = {'serial_number': '',
               'disk_setup': '',
@@ -65,6 +78,8 @@ class OgLinuxOperations:
             (output, error) = ogRest.proc.communicate()
         except:
             raise ValueError('Error: Incorrect command value')
+
+        self._restartBrowser()
 
         return output.decode('utf-8')
 
@@ -142,6 +157,8 @@ class OgLinuxOperations:
 
         cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
         result = subprocess.check_output([cmd_get_conf], shell=True)
+        self._restartBrowser()
+
         return self.parseGetConf(result.decode('utf-8'))
 
     def image_restore(self, request, ogRest):
@@ -163,6 +180,8 @@ class OgLinuxOperations:
             (output, error) = ogRest.proc.communicate()
         except:
             raise ValueError('Error: Incorrect command value')
+
+        self._restartBrowser()
 
         return output.decode('utf-8')
 
@@ -209,5 +228,7 @@ class OgLinuxOperations:
             (output, error) = ogRest.proc.communicate()
         except:
             raise ValueError('Error: Incorrect command value')
+
+        self._restartBrowser()
 
         return self.parseGetConf(output.decode('utf-8'))
