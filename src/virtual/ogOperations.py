@@ -18,6 +18,7 @@ import hivex
 import pathlib
 import re
 import math
+import sys
 
 class OgQMP:
     class State(enum.Enum):
@@ -61,6 +62,14 @@ class OgVirtualOperations:
         self.IP = '127.0.0.1'
         self.VIRTUAL_PORT = 4444
         self.USABLE_DISK = 0.75
+        self.OG_PATH = os.path.dirname(os.path.realpath(sys.argv[0]))
+        self.OG_IMAGES_PATH = f'{self.OG_PATH}/images'
+        self.OG_PARTITIONS_PATH = f'{self.OG_PATH}/partitions'
+
+        if not os.path.exists(self.OG_IMAGES_PATH):
+            os.mkdir(self.OG_IMAGES_PATH, mode=0o755)
+        if not os.path.exists(self.OG_PARTITIONS_PATH):
+            os.mkdir(self.OG_PARTITIONS_PATH, mode=0o755)
 
     def poweroff(self):
         qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
@@ -93,14 +102,13 @@ class OgVirtualOperations:
         # Calculate the lower power of 2 amout of RAM memory for the VM.
         vm_ram_mib = 2 ** math.floor(math.log(available_ram_mib) / math.log(2))
 
-        cmd = (f'qemu-system-x86_64 -hda disk{disk}_part{partition}.qcow2 '
+        cmd = (f'qemu-system-x86_64 -hda {self.OG_PARTITIONS_PATH}/disk{disk}_part{partition}.qcow2 '
                f'-qmp tcp:localhost:4444,server,nowait --enable-kvm '
-               f'-display gtk -cpu host -m {vm_ram_mib}M -boot c')
+               f'-display gtk -cpu host -m {vm_ram_mib}M -boot c -full-screen')
         subprocess.Popen([cmd], shell=True)
 
     def refresh(self, ogRest):
-        path = 'partitions.json'
-        temp_mount_dir = 'mnt'
+        path = f'{self.OG_PATH}/partitions.json'
         try:
             with open(path, 'r+') as f:
                 data = json.loads(f.read())
@@ -158,8 +166,8 @@ class OgVirtualOperations:
         return data
 
     def setup(self, request, ogRest):
-        path = 'partitions.json'
-        refresh(ogRest)
+        path = f'{self.OG_PATH}/partitions.json'
+        self.refresh(ogRest)
 
         part_setup = request.getPartitionSetup()
         disk = request.getDisk()
@@ -195,7 +203,7 @@ class OgVirtualOperations:
                 f.write(json.dumps(data, indent=4))
                 f.truncate()
 
-        return refresh(ogRest)
+        return self.refresh(ogRest)
 
     def image_create(self, path, request, ogRest):
         disk = request.getDisk()
@@ -209,15 +217,19 @@ class OgVirtualOperations:
             qmp.disconnect()
             return None
 
-        refresh(ogRest)
+        self.refresh(ogRest)
+
+        drive_path = f'{self.OG_PARTITIONS_PATH}/disk{disk}_part{partition}.qcow2'
 
         drive_path = f'disk{disk}_part{partition}.qcow2'
         repo_path = f'images'
 
         try:
-            shutil.copy(drive_path, f'{repo_path}/{name}')
+            shutil.copy(drive_path, f'{self.OG_IMAGES_PATH}/{name}')
         except:
             return None
+
+        subprocess.run([f'umount {self.OG_IMAGES_PATH}'], shell=True)
 
         return True
 
@@ -237,16 +249,15 @@ class OgVirtualOperations:
             qmp.disconnect()
             return None
 
-        refresh(ogRest)
+        self.refresh(ogRest)
 
-        drive_path = f'disk{disk}_part{partition}.qcow2'
-        repo_path = f'images'
+        drive_path = f'{self.OG_PARTITIONS_PATH}/disk{disk}_part{partition}.qcow2'
 
         if os.path.exists(drive_path):
             os.remove(drive_path)
 
         try:
-            shutil.copy(f'{repo_path}/{name}', drive_path)
+            shutil.copy(f'{self.OG_IMAGES_PATH}/{name}', drive_path)
         except:
             return None
 
@@ -257,7 +268,7 @@ class OgVirtualOperations:
 
         disk = request.getDisk()
         partition = request.getPartition()
-        drive_path = f'disk{disk}_part{partition}.qcow2'
+        drive_path = f'{self.OG_PARTITIONS_PATH}/disk{disk}_part{partition}.qcow2'
         g = guestfs.GuestFS(python_return_dict=True)
         g.add_drive_opts(drive_path, readonly=1)
         g.launch()
@@ -356,7 +367,7 @@ class OgVirtualOperations:
         qmp.send(str({"execute": "query-pci"}))
         data = json.loads(qmp.recv())
         data = data['return'][0]['devices']
-        pci_list = parse_pci()
+        pci_list = self.parse_pci()
         device_names = {}
         for device in data:
             vendor_id = hex(device['id']['vendor'])[2:]
