@@ -358,11 +358,7 @@ class OgVirtualOperations:
                 software += [h.node_name(x) for x in h.node_children(key)]
             os.remove('win_reg')
 
-        with open(path, 'w+') as f:
-            f.seek(0)
-            for program in software:
-                f.write(f'{program}\n')
-            f.truncate()
+        return '\n'.join(software)
 
     def parse_pci(self, path='/usr/share/misc/pci.ids'):
         data = {}

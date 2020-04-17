@@ -117,7 +117,10 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
-        return output.decode('utf-8')
+        software = ''
+        with open(path, 'r') as f:
+            software = f.read()
+        return software
 
     def hardware(self, path, ogRest):
         try:

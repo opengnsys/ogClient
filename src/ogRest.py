@@ -119,7 +119,7 @@ class ogThread():
 
 	def software(client, request, path, ogRest):
 		try:
-			ogRest.operations.software(request, path, ogRest)
+			software = ogRest.operations.software(request, path, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -128,8 +128,7 @@ class ogThread():
 
 		json_body = jsonBody()
 		json_body.add_element('partition', request.getPartition())
-		with open(path, 'r') as f:
-			json_body.add_element('software', f.read())
+		json_body.add_element('software', software)
 
 		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
@@ -188,6 +187,7 @@ class ogThread():
 	def image_create(client, path, request, ogRest):
 		try:
 			ogRest.operations.image_create(path, request, ogRest)
+			software = ogRest.operations.software(request, path, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
@@ -201,8 +201,7 @@ class ogThread():
 		json_body.add_element('id', request.getId())
 		json_body.add_element('name', request.getName())
 		json_body.add_element('repository', request.getRepo())
-		with open(path, 'r') as f:
-			json_body.add_element('software', f.read())
+		json_body.add_element('software', software)
 
 		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
