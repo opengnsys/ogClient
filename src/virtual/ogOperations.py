@@ -192,17 +192,18 @@ class OgVirtualOperations:
             if int(part['format']) == 0:
                 continue
 
-            drive_path = f'disk{disk}_part{part["partition"]}.qcow2'
-            sequence = [f'qemu-img create -f qcow2 {drive_path} {part["size"]}K',
-                        f'qemu-nbd -c /dev/nbd0 {drive_path}',
-                        f'parted /dev/nbd0 mklabel gpt',
-                        f'parted -a opt /dev/nbd0 mkpart primary {part["filesystem"]} 2048s 100%',
-                        f'mkfs.{part["filesystem"].lower()} /dev/nbd0p1',
-                        f'qemu-nbd -d /dev/nbd0']
-            for cmd in sequence:
-                process = subprocess.run([cmd], shell=True)
-                if process.returncode != 0:
-                    raise RuntimeError
+            drive_path = f'{self.OG_PARTITIONS_PATH}/disk{disk}_part{part["partition"]}.qcow2'
+            g = guestfs.GuestFS(python_return_dict=True)
+            g.disk_create(drive_path, "qcow2", int(part['size']) * 1024)
+            g.add_drive_opts(drive_path, format="qcow2", readonly=0)
+            g.launch()
+            devices = g.list_devices()
+            assert(len(devices) == 1)
+            g.part_disk(devices[0], "gpt")
+            partitions = g.list_partitions()
+            assert(len(partitions) == 1)
+            g.mkfs(part["filesystem"].lower(), partitions[0])
+            g.close()
 
             with open(path, 'r+') as f:
                 data = json.loads(f.read())
