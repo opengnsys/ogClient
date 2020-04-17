@@ -18,11 +18,12 @@ class OgLinuxOperations:
     _config_path = f'{ogConfig.OG_PATH}ogclient/cfg/ogclient.cfg'
     _ogconfig.parser_file(_config_path)
     _url = _ogconfig.get_value_section('opengnsys', 'url')
+    _url_log = _ogconfig.get_value_section('opengnsys', 'url_log')
 
-    def _restartBrowser(self):
+    def _restartBrowser(self, url):
         try:
             proc = subprocess.call(["pkill", "-9", "browser"])
-            proc = subprocess.Popen(["browser", "-qws", OgLinuxOperations._url])
+            proc = subprocess.Popen(["browser", "-qws", url])
         except:
             raise ValueError('Error: cannot restart browser')
 
@@ -70,6 +71,9 @@ class OgLinuxOperations:
     def execCMD(self, request, ogRest):
         cmd = request.getrun()
         cmds = cmd.split(";|\n\r")
+
+        self._restartBrowser(OgLinuxOperations._url_log)
+
         try:
             ogRest.proc = subprocess.Popen(cmds,
                                stdout=subprocess.PIPE,
@@ -81,7 +85,7 @@ class OgLinuxOperations:
 
         cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
         result = subprocess.check_output([cmd_get_conf], shell=True)
-        self._restartBrowser()
+        self._restartBrowser(OgLinuxOperations._url)
 
         return output.decode('utf-8')
 
@@ -105,6 +109,8 @@ class OgLinuxOperations:
         disk = request.getDisk()
         partition = request.getPartition()
 
+        self._restartBrowser(OgLinuxOperations._url_log)
+
         try:
             cmd = f'{ogConfig.OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
                   f'{partition} {path}'
@@ -117,12 +123,16 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
+        self._restartBrowser(OgLinuxOperations._url)
+
         software = ''
         with open(path, 'r') as f:
             software = f.read()
         return software
 
     def hardware(self, path, ogRest):
+        self._restartBrowser(OgLinuxOperations._url_log)
+
         try:
             cmd = f'{ogConfig.OG_PATH}interfaceAdm/InventarioHardware {path}'
             ogRest.proc = subprocess.Popen([cmd],
@@ -132,6 +142,8 @@ class OgLinuxOperations:
             (output, error) = ogRest.proc.communicate()
         except:
             raise ValueError('Error: Incorrect command value')
+
+        self._restartBrowser(OgLinuxOperations._url)
 
         return output.decode('utf-8')
 
@@ -162,7 +174,7 @@ class OgLinuxOperations:
 
         cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
         result = subprocess.check_output([cmd_get_conf], shell=True)
-        self._restartBrowser()
+        self._restartBrowser(OgLinuxOperations._url)
 
         return self.parseGetConf(result.decode('utf-8'))
 
@@ -177,6 +189,8 @@ class OgLinuxOperations:
         cmd = f'{ogConfig.OG_PATH}interfaceAdm/RestaurarImagen {disk} {partition} ' \
               f'{name} {repo} {ctype}'
 
+        self._restartBrowser(OgLinuxOperations._url_log)
+
         try:
             ogRest.proc = subprocess.Popen([cmd],
                                stdout=subprocess.PIPE,
@@ -188,7 +202,7 @@ class OgLinuxOperations:
 
         cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
         result = subprocess.check_output([cmd_get_conf], shell=True)
-        self._restartBrowser()
+        self._restartBrowser(OgLinuxOperations._url)
 
         return output.decode('utf-8')
 
@@ -201,6 +215,8 @@ class OgLinuxOperations:
                    f'{partition} {path}'
         cmd_create_image = f'{ogConfig.OG_PATH}interfaceAdm/CrearImagen {disk} ' \
                    f'{partition} {name} {repo}'
+
+        self._restartBrowser(OgLinuxOperations._url_log)
 
         try:
             ogRest.proc = subprocess.Popen([cmd_software],
@@ -223,9 +239,13 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
+        self._restartBrowser(OgLinuxOperations._url)
+
         return output.decode('utf-8')
 
     def refresh(self, ogRest):
+        self._restartBrowser(OgLinuxOperations._url_log)
+
         try:
             cmd = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
             ogRest.proc = subprocess.Popen([cmd],
@@ -236,6 +256,6 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
-        self._restartBrowser()
+        self._restartBrowser(OgLinuxOperations._url)
 
         return self.parseGetConf(output.decode('utf-8'))
