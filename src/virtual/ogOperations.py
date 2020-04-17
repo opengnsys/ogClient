@@ -114,20 +114,36 @@ class OgVirtualOperations:
                 data = json.loads(f.read())
                 for part in data['partition_setup']:
                     if len(part['virt-drive']) > 0:
-                        subprocess.run([f'qemu-nbd -c /dev/nbd0 {part["virt-drive"]}'],
-                                       shell=True)
-                        subprocess.run([f'partprobe /dev/nbd0'],
-                                       shell=True)
-                        subprocess.run([f'mount /dev/nbd0p1 {temp_mount_dir}'],
-                                       shell=True)
-                        total_disk, used_disk, free_disk = shutil.disk_usage(temp_mount_dir)
-                        free_disk = int(free_disk * self.USABLE_DISK)
-                        subprocess.run([f'umount {temp_mount_dir}'],
-                                       shell=True)
-                        subprocess.run(['qemu-nbd -d /dev/nbd0'],
-                                       shell=True)
-                        part['size'] = int(free_disk / 1024)
-                        part['used_size'] = int(100 * used_disk / free_disk)
+                        if not os.path.exists(part['virt-drive']):
+                            part['code'] = '',
+                            part['filesystem'] = 'EMPTY'
+                            part['os'] = ''
+                            part['size'] = 0
+                            part['used_size'] = 0
+                            part['virt-drive'] = ''
+                            continue
+                        g = guestfs.GuestFS(python_return_dict=True)
+                        g.add_drive_opts(part['virt-drive'],
+                                         format="qcow2",
+                                         readonly=0)
+                        g.launch()
+                        devices = g.list_devices()
+                        assert(len(devices) == 1)
+                        partitions = g.list_partitions()
+                        assert(len(partitions) == 1)
+                        g.mount(partitions[0], '/')
+                        used_disk = g.du('/')
+                        g.umount_all()
+                        total_size = g.disk_virtual_size(part['virt-drive']) / 1024
+                        part['used_size'] = int(100 * used_disk / total_size)
+                        part['size'] = total_size
+                        root = g.inspect_os()
+                        if len(root) == 1:
+                            part['os'] = f'{g.inspect_get_distro(root[0])} ' \
+                                         f'{g.inspect_get_product_name(root[0])}'
+                        else:
+                            part['os'] = ''
+                        g.close()
                 f.seek(0)
                 f.write(json.dumps(data, indent=4))
                 f.truncate()
