@@ -227,6 +227,7 @@ class OgVirtualOperations:
         partition = request.getPartition()
         name = request.getName()
         repo = request.getRepo()
+        samba_config = ogRest.samba_config
 
         # Check if VM is running.
         qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
@@ -238,8 +239,11 @@ class OgVirtualOperations:
 
         drive_path = f'{self.OG_PARTITIONS_PATH}/disk{disk}_part{partition}.qcow2'
 
-        drive_path = f'disk{disk}_part{partition}.qcow2'
-        repo_path = f'images'
+        cmd = f'mount -t cifs //{repo}/ogimages {self.OG_IMAGES_PATH} -o ' \
+              f'rw,nolock,serverino,acl,' \
+              f'username={samba_config["user"]},' \
+              f'password={samba_config["pass"]}'
+        subprocess.run([cmd], shell=True)
 
         try:
             shutil.copy(drive_path, f'{self.OG_IMAGES_PATH}/{name}')
@@ -259,6 +263,7 @@ class OgVirtualOperations:
         ctype = request.getType()
         profile = request.getProfile()
         cid = request.getId()
+        samba_config = ogRest.samba_config
 
         # Check if VM is running.
         qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
@@ -273,10 +278,18 @@ class OgVirtualOperations:
         if os.path.exists(drive_path):
             os.remove(drive_path)
 
+        cmd = f'mount -t cifs //{repo}/ogimages {self.OG_IMAGES_PATH} -o ' \
+              f'ro,nolock,serverino,acl,' \
+              f'username={samba_config["user"]},' \
+              f'password={samba_config["pass"]}'
+        subprocess.run([cmd], shell=True)
+
         try:
             shutil.copy(f'{self.OG_IMAGES_PATH}/{name}', drive_path)
         except:
             return None
+
+        subprocess.run([f'umount {self.OG_IMAGES_PATH}'], shell=True)
 
         return True
 

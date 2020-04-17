@@ -23,14 +23,19 @@ class State(Enum):
 	FORCE_DISCONNECTED = 2
 
 class ogClient:
-	def __init__(self, ip, port, mode):
+	def __init__(self, ip, port, mode, samba_config=None):
 		if mode not in {'virtual', 'linux'}:
 			raise ValueError('Mode not supported.')
+
+		if samba_config:
+			assert('user' in samba_config)
+			assert('pass' in samba_config)
 
 		self.ip = ip
 		self.port = port
 		self.mode = mode
-		self.ogrest = ogRest(self.mode)
+		self.samba_config = samba_config
+		self.ogrest = ogRest(self.mode, self.samba_config)
 
 	def get_socket(self):
 		return self.sock

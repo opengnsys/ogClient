@@ -25,8 +25,17 @@ def main():
 	port = ogconfig.get_value_section('opengnsys', 'port')
 	url = ogconfig.get_value_section('opengnsys', 'url')
 	mode = ogconfig.get_value_section('opengnsys', 'mode')
+	samba_user = ogconfig.get_value_section('samba', 'user')
+	samba_pass = ogconfig.get_value_section('samba', 'pass')
 
-	client = ogClient(ip, int(port), mode)
+	samba_config = None
+
+	if mode == 'linux':
+		proc = subprocess.Popen(["browser", "-qws", url])
+	elif mode == 'virtual':
+		samba_config = {'user': samba_user, 'pass': samba_pass}
+
+	client = ogClient(ip, int(port), mode, samba_config)
 	client.connect()
 	client.run()
 

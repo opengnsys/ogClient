@@ -232,11 +232,12 @@ class ogResponses(Enum):
 	SERVICE_UNAVAILABLE=5
 
 class ogRest():
-	def __init__(self, mode):
+	def __init__(self, mode, samba_config):
 		self.proc = None
 		self.terminated = False
 		self.state = ThreadState.IDLE
 		self.mode = mode
+		self.samba_config = samba_config
 
 		if self.mode == 'linux' and platform.system() == 'Linux':
 			self.operations = OgLinuxOperations()
