@@ -318,10 +318,10 @@ class ogRest():
 		response = restResponse(ogResponses.IN_PROGRESS)
 		client.send(response.get())
 
-		client.disconnect()
-
-		if self.state == ThreadState.BUSY:
-			self.kill_process()
+		if self.mode != 'virtual':
+			client.disconnect()
+			if self.state == ThreadState.BUSY:
+				self.kill_process()
 
 		threading.Thread(target=ogThread.reboot, args=(self,)).start()
 
@@ -329,10 +329,10 @@ class ogRest():
 		response = restResponse(ogResponses.IN_PROGRESS)
 		client.send(response.get())
 
-		client.disconnect()
-
-		if self.state == ThreadState.BUSY:
-			self.kill_process()
+		if self.mode != 'virtual':
+			client.disconnect()
+			if self.state == ThreadState.BUSY:
+				self.kill_process()
 
 		threading.Thread(target=ogThread.poweroff, args=(self,)).start()
 
