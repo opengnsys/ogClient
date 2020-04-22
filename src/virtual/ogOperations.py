@@ -8,7 +8,7 @@
 
 import socket
 import errno
-import enum
+import select
 import json
 import subprocess
 import shutil
@@ -21,40 +21,53 @@ import math
 import sys
 
 class OgQMP:
-    class State(enum.Enum):
-        CONNECTING = 0
-        RECEIVING = 1
-        FORCE_DISCONNECTED = 2
+    QMP_TIMEOUT = 5
 
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
-
-    def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.state = self.State.CONNECTING
-        self.data = ""
-
+        self.sock.setblocking(0)
         try:
-            self.sock.connect((self.ip, self.port))
+            self.sock.connect((ip, port))
         except socket.error as err:
-            print('Error connection' + str(err))
-            return None
+            if err.errno == errno.ECONNREFUSED:
+                raise Exception('cannot connect to qemu')
+            elif err.errno == errno.EINPROGRESS:
+                pass
 
-    def recv(self):
-        self.data = self.sock.recv(50024).decode('utf-8')
-        return self.data
+        readset = [ self.sock ]
+        writeset = [ self.sock ]
+        readable, writable, exception = select.select(readset,
+                                                      writeset,
+                                                      [],
+                                                      OgQMP.QMP_TIMEOUT)
+        if self.sock in writable:
+            try:
+                self.sock.connect((self.ip, self.port))
+                print("connected")
+            except socket.error as err:
+                if err.errno == errno.ECONNREFUSED:
+                    raise Exception('cannot connect to qemu')
 
+    def talk(self, data):
+        try:
+            self.sock.send(bytes(data, 'utf-8'))
+        except:
+            raise Exception('cannot talk to qemu')
 
-    def send(self, data=None):
-        if not data:
-            return None
-
-        self.sock.send(bytes(data, 'utf-8'))
-        return len(data)
+        readset = [ self.sock ]
+        readable, writable, exception = select.select(readset, [], [], 5)
+        if self.sock in readable:
+            try:
+                out = self.sock.recv(4096).decode('utf-8')
+            except socket.error as err:
+                raise Exception('cannot talk to qemu')
+        else:
+            raise Exception('timeout when talking to qemu')
+        return out
 
     def disconnect(self):
-        self.state = self.State.FORCE_DISCONNECTED
         self.sock.close()
 
 class OgVirtualOperations:
@@ -72,22 +85,22 @@ class OgVirtualOperations:
             os.mkdir(self.OG_PARTITIONS_PATH, mode=0o755)
 
     def poweroff(self):
-        qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-        qmp.connect()
-        qmp.recv()
-        qmp.send(str({"execute": "qmp_capabilities"}))
-        qmp.recv()
-        qmp.send(str({"execute": "system_powerdown"}))
-        qmp.disconnect()
+        try:
+            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
+            qmp.talk(str({"execute": "qmp_capabilities"}))
+            qmp.talk(str({"execute": "system_powerdown"}))
+            qmp.disconnect()
+        except:
+            pass
 
     def reboot(self):
-        qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-        qmp.connect()
-        qmp.recv()
-        qmp.send(str({"execute": "qmp_capabilities"}))
-        qmp.recv()
-        qmp.send(str({"execute": "system_reset"}))
-        qmp.disconnect()
+        try:
+            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
+            qmp.talk(str({"execute": "qmp_capabilities"}))
+            qmp.talk(str({"execute": "system_reset"}))
+            qmp.disconnect()
+        except:
+            pass
 
     def execCMD(self, request, ogRest):
         # TODO Implement.
@@ -230,10 +243,12 @@ class OgVirtualOperations:
         samba_config = ogRest.samba_config
 
         # Check if VM is running.
-        qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-        if qmp.connect() != None:
+        try:
+            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
             qmp.disconnect()
             return None
+        except:
+            pass
 
         self.refresh(ogRest)
 
@@ -266,10 +281,12 @@ class OgVirtualOperations:
         samba_config = ogRest.samba_config
 
         # Check if VM is running.
-        qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-        if qmp.connect() != None:
+        try:
+            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
             qmp.disconnect()
             return None
+        except:
+            pass
 
         self.refresh(ogRest)
 
@@ -385,17 +402,24 @@ class OgVirtualOperations:
         return data
 
     def hardware(self, path, ogRest):
-        qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-        qmp.connect()
-        qmp.recv()
-        qmp.send(str({"execute": "qmp_capabilities"}))
-        qmp.recv()
-        qmp.send(str({"execute": "query-pci"}))
-        data = json.loads(qmp.recv())
-        data = data['return'][0]['devices']
+        try:
+            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
+            qmp.talk(str({"execute": "qmp_capabilities"}))
+            pci_data = qmp.talk(str({"execute": "query-pci"}))
+            mem_data = qmp.talk(str({"execute": "query-memory-size-summary"}))
+            cpu_data = qmp.talk(str({"execute": "query-cpus-fast"}))
+            qmp.disconnect()
+        except:
+            pass
+
+        pci_data = json.loads(pci_data)
+        mem_data = json.loads(mem_data)
+        cpu_data = json.loads(cpu_data)
+
+        pci_data = pci_data['return'][0]['devices']
         pci_list = self.parse_pci()
         device_names = {}
-        for device in data:
+        for device in pci_data:
             vendor_id = hex(device['id']['vendor'])[2:]
             device_id = hex(device['id']['device'])[2:]
             subvendor_id = hex(device['id']['subsystem-vendor'])[2:]
@@ -426,17 +450,12 @@ class OgVirtualOperations:
             elif 'dvd' in description:
                 device_names['cdr'] = name
 
-        qmp.send(str({"execute": "query-memory-size-summary"}))
-        data = json.loads(qmp.recv())
-        ram_size = int(data['return']['base-memory']) * 2 ** -20
+        ram_size = int(mem_data['return']['base-memory']) * 2 ** -20
         device_names['mem'] = f'QEMU {int(ram_size)}MiB'
 
-        qmp.send(str({"execute": "query-cpus-fast"}))
-        data = json.loads(qmp.recv())
-        qmp.disconnect()
-        cpu_arch = data['return'][0]['arch']
-        cpu_target = data['return'][0]['target']
-        cpu_cores = len(data['return'])
+        cpu_arch = cpu_data['return'][0]['arch']
+        cpu_target = cpu_data['return'][0]['target']
+        cpu_cores = len(cpu_data['return'])
         device_names['cpu'] = f'CPU arch:{cpu_arch} target:{cpu_target} ' \
                               f'cores:{cpu_cores}'
 
