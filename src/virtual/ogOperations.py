@@ -142,8 +142,28 @@ class OgVirtualOperations:
                f'-display gtk -cpu host -m {vm_ram_mib}M -boot c -full-screen')
         subprocess.Popen([cmd], shell=True)
 
+    def partitions_cfg_to_json(self, data):
+        for part in data['partition_setup']:
+            part.pop('virt-drive')
+            for k, v in part.items():
+                part[k] = str(v)
+        data['disk_setup'] = {k: str(v) for k, v in data['disk_setup'].items()}
+        return data
+
     def refresh(self, ogRest):
         path = f'{self.OG_PATH}/partitions.json'
+
+        try:
+            # Return last partitions setup in case VM is running.
+            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
+            qmp.disconnect()
+            with open(path, 'r') as f:
+                data = json.loads(f.read())
+            data = self.partitions_cfg_to_json(data)
+            return data
+        except:
+            pass
+
         try:
             with open(path, 'r+') as f:
                 data = json.loads(f.read())
@@ -207,12 +227,7 @@ class OgVirtualOperations:
             with open(path, 'w+') as f:
                 f.write(json.dumps(data, indent=4))
 
-        # TODO no debería ser necesario eliminar virt-drive ni transformar a strings
-        for part in data['partition_setup']:
-            part.pop('virt-drive')
-            for k, v in part.items():
-                part[k] = str(v)
-        data['disk_setup'] = {k: str(v) for k, v in data['disk_setup'].items()}
+        data = self.partitions_cfg_to_json(data)
 
         return data
 
