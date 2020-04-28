@@ -22,6 +22,7 @@ import sys
 
 class OgQMP:
     QMP_TIMEOUT = 5
+    QMP_POWEROFF_TIMEOUT = 300
 
     def __init__(self, ip, port):
         self.ip = ip
@@ -106,19 +107,29 @@ class OgVirtualOperations:
         if not os.path.exists(self.OG_PARTITIONS_PATH):
             os.mkdir(self.OG_PARTITIONS_PATH, mode=0o755)
 
-    def poweroff(self):
+    def poweroff_guest(self):
         try:
             qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-            qmp.talk(str({"execute": "qmp_capabilities"}))
-            qmp.talk(str({"execute": "system_powerdown"}))
-            qmp.disconnect()
         except:
-            pass
+            return
+
+        qmp.talk(str({"execute": "system_powerdown"}))
+        out = qmp.recv()
+        assert(out['event'] == 'POWERDOWN')
+        out = qmp.recv(timeout=OgQMP.QMP_POWEROFF_TIMEOUT)
+        assert(out['event'] == 'SHUTDOWN')
+        qmp.disconnect()
+
+    def poweroff_host(self):
+        subprocess.run(['/sbin/poweroff'])
+
+    def poweroff(self):
+        self.poweroff_guest()
+        self.poweroff_host()
 
     def reboot(self):
         try:
             qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-            qmp.talk(str({"execute": "qmp_capabilities"}))
             qmp.talk(str({"execute": "system_reset"}))
             qmp.disconnect()
         except:
@@ -233,6 +244,7 @@ class OgVirtualOperations:
 
     def setup(self, request, ogRest):
         path = f'{self.OG_PATH}/partitions.json'
+        self.poweroff_guest()
         self.refresh(ogRest)
 
         part_setup = request.getPartitionSetup()
@@ -279,13 +291,7 @@ class OgVirtualOperations:
         repo = request.getRepo()
         samba_config = ogRest.samba_config
 
-        # Check if VM is running.
-        try:
-            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-            qmp.disconnect()
-            return None
-        except:
-            pass
+        self.poweroff_guest()
 
         self.refresh(ogRest)
 
@@ -317,14 +323,7 @@ class OgVirtualOperations:
         cid = request.getId()
         samba_config = ogRest.samba_config
 
-        # Check if VM is running.
-        try:
-            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-            qmp.disconnect()
-            return None
-        except:
-            pass
-
+        self.poweroff_guest()
         self.refresh(ogRest)
 
         drive_path = f'{self.OG_PARTITIONS_PATH}/disk{disk}_part{partition}.qcow2'
@@ -441,7 +440,6 @@ class OgVirtualOperations:
     def hardware(self, path, ogRest):
         try:
             qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-            qmp.talk(str({"execute": "qmp_capabilities"}))
             pci_data = qmp.talk(str({"execute": "query-pci"}))
             mem_data = qmp.talk(str({"execute": "query-memory-size-summary"}))
             cpu_data = qmp.talk(str({"execute": "query-cpus-fast"}))
