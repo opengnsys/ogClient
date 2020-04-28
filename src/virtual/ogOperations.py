@@ -50,6 +50,10 @@ class OgQMP:
                 if err.errno == errno.ECONNREFUSED:
                     raise Exception('cannot connect to qemu')
 
+        out = self.talk(str({"execute": "qmp_capabilities"}))
+        if 'QMP' not in out:
+            raise Exception('cannot handshake qemu')
+
     def talk(self, data):
         try:
             self.sock.send(bytes(data, 'utf-8'))
@@ -61,6 +65,21 @@ class OgQMP:
         if self.sock in readable:
             try:
                 out = self.sock.recv(4096).decode('utf-8')
+                out = json.loads(out)
+            except socket.error as err:
+                raise Exception('cannot talk to qemu')
+        else:
+            raise Exception('timeout when talking to qemu')
+        return out
+
+    def recv(self, timeout=QMP_TIMEOUT):
+        readset = [self.sock]
+        readable, _, _ = select.select(readset, [], [], timeout)
+
+        if self.sock in readable:
+            try:
+                out = self.sock.recv(4096).decode('utf-8')
+                out = json.loads(out)
             except socket.error as err:
                 raise Exception('cannot talk to qemu')
         else:
@@ -68,7 +87,10 @@ class OgQMP:
         return out
 
     def disconnect(self):
-        self.sock.close()
+        try:
+            self.sock.close()
+        except:
+            pass
 
 class OgVirtualOperations:
     def __init__(self):
