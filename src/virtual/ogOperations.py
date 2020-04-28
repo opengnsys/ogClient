@@ -20,6 +20,39 @@ import re
 import math
 import sys
 
+class OgVM:
+    DEFAULT_CPU = 'host'
+    DEFAULT_VGA = 'std'
+    DEFAULT_QMP_PORT = 4444
+
+    def __init__(self,
+                 partition_path,
+                 memory=None,
+                 cpu=DEFAULT_CPU,
+                 vga=DEFAULT_VGA,
+                 qmp_port=DEFAULT_QMP_PORT):
+        self.partition_path = partition_path
+        self.cpu = cpu
+        self.vga = vga
+        self.qmp_port = qmp_port
+        self.proc = None
+
+        if memory:
+            self.mem = memory
+        else:
+            available_ram = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+            available_ram = available_ram / 2 ** 20
+            # Calculate the lower power of 2 amout of RAM memory for the VM.
+            self.mem = 2 ** math.floor(math.log(available_ram) / math.log(2))
+
+
+    def run_vm(self):
+        cmd = (f'qemu-system-x86_64 -hda {self.partition_path} '
+               f'-qmp tcp:localhost:4444,server,nowait --enable-kvm '
+               f'-vga {self.vga} -display gtk -cpu {self.cpu} -m {self.mem}M '
+               f'-boot c -full-screen')
+        self.proc = subprocess.Popen([cmd], shell=True)
+
 class OgQMP:
     QMP_TIMEOUT = 5
     QMP_POWEROFF_TIMEOUT = 300
@@ -143,15 +176,9 @@ class OgVirtualOperations:
         disk = request.getDisk()
         partition = request.getPartition()
 
-        available_ram = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
-        available_ram_mib = available_ram / 1024 ** 2
-        # Calculate the lower power of 2 amout of RAM memory for the VM.
-        vm_ram_mib = 2 ** math.floor(math.log(available_ram_mib) / math.log(2))
-
-        cmd = (f'qemu-system-x86_64 -hda {self.OG_PARTITIONS_PATH}/disk{disk}_part{partition}.qcow2 '
-               f'-qmp tcp:localhost:4444,server,nowait --enable-kvm '
-               f'-display gtk -cpu host -m {vm_ram_mib}M -boot c -full-screen')
-        subprocess.Popen([cmd], shell=True)
+        part_path = f'{self.OG_PARTITIONS_PATH}/disk{disk}_part{partition}.qcow2'
+        qemu = OgVM(part_path)
+        qemu.run_vm()
 
     def partitions_cfg_to_json(self, data):
         for part in data['partition_setup']:
