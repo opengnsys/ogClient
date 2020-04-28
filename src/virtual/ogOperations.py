@@ -170,7 +170,7 @@ class OgVirtualOperations:
                                    'filesystem': '',
                                    'os': '',
                                    'size': int(free_disk / 1024),
-                                   'used_size': int(100 * used_disk / free_disk)},
+                                   'used_size': int(100 * used_disk / total_disk)},
                     'partition_setup': []}
             for i in range(4):
                 part_json = {'disk': 1,
