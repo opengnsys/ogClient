@@ -19,7 +19,7 @@ import signal
 from src.restRequest import *
 
 from src.linux.ogOperations import OgLinuxOperations
-from src.virtual.ogOperations import OgVirtualOperations
+from src.virtual.ogOperations import OgVirtualOperations, OgVM
 
 class ThreadState(Enum):
 	IDLE = 0
@@ -96,6 +96,17 @@ class ogThread():
 			client.send(response.get())
 
 		ogRest.state = ThreadState.IDLE
+
+	def check_vm_state_loop(ogRest):
+		POLLING_WAIT_TIME = 3
+		while True:
+			state = ogRest.operations.check_vm_state()
+			installed_os = ogRest.operations.get_installed_os()
+			if state == OgVM.State.STOPPED and \
+			   ogRest.state == ThreadState.IDLE and \
+			   len(installed_os) > 0:
+				ogRest.operations.poweroff_host()
+			time.sleep(POLLING_WAIT_TIME)
 
 	def poweroff(ogRest):
 		time.sleep(2)
@@ -242,6 +253,8 @@ class ogRest():
 			self.operations = OgLinuxOperations()
 		elif self.mode == 'virtual':
 			self.operations = OgVirtualOperations()
+			threading.Thread(target=ogThread.check_vm_state_loop,
+					 args=(self,)).start()
 		else:
 			raise ValueError('Mode not supported.')
 

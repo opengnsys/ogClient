@@ -19,11 +19,16 @@ import pathlib
 import re
 import math
 import sys
+import enum
 
 class OgVM:
     DEFAULT_CPU = 'host'
     DEFAULT_VGA = 'std'
     DEFAULT_QMP_PORT = 4444
+
+    class State(enum.Enum):
+        STOPPED = 0
+        RUNNING = 1
 
     def __init__(self,
                  partition_path,
@@ -134,6 +139,7 @@ class OgVirtualOperations:
         self.OG_PATH = os.path.dirname(os.path.realpath(sys.argv[0]))
         self.OG_IMAGES_PATH = f'{self.OG_PATH}/images'
         self.OG_PARTITIONS_PATH = f'{self.OG_PATH}/partitions'
+        self.OG_PARTITIONS_CFG_PATH = f'{self.OG_PATH}/partitions.json'
 
         if not os.path.exists(self.OG_IMAGES_PATH):
             os.mkdir(self.OG_IMAGES_PATH, mode=0o755)
@@ -167,6 +173,26 @@ class OgVirtualOperations:
             qmp.disconnect()
         except:
             pass
+
+    def check_vm_state(self):
+        try:
+            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
+            qmp.disconnect()
+            return OgVM.State.RUNNING
+        except:
+            return OgVM.State.STOPPED
+
+    def get_installed_os(self):
+        installed_os = {}
+        try:
+            with open(self.OG_PARTITIONS_CFG_PATH, 'r') as f:
+                cfg = json.loads(f.read())
+            for part in cfg['partition_setup']:
+                if len(part['os']) > 0:
+                    installed_os[part['os']] = (part['disk'], part['partition'])
+        except:
+            pass
+        return installed_os
 
     def execCMD(self, request, ogRest):
         # TODO Implement.
