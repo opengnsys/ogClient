@@ -215,13 +215,11 @@ class OgVirtualOperations:
         return data
 
     def refresh(self, ogRest):
-        path = f'{self.OG_PATH}/partitions.json'
-
         try:
             # Return last partitions setup in case VM is running.
             qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
             qmp.disconnect()
-            with open(path, 'r') as f:
+            with open(self.OG_PARTITIONS_CFG_PATH, 'r') as f:
                 data = json.loads(f.read())
             data = self.partitions_cfg_to_json(data)
             return data
@@ -229,7 +227,7 @@ class OgVirtualOperations:
             pass
 
         try:
-            with open(path, 'r+') as f:
+            with open(self.OG_PARTITIONS_CFG_PATH, 'r+') as f:
                 data = json.loads(f.read())
                 for part in data['partition_setup']:
                     if len(part['virt-drive']) > 0:
@@ -288,7 +286,7 @@ class OgVirtualOperations:
                              'used_size': 0,
                              'virt-drive': ''}
                 data['partition_setup'].append(part_json)
-            with open(path, 'w+') as f:
+            with open(self.OG_PARTITIONS_CFG_PATH, 'w+') as f:
                 f.write(json.dumps(data, indent=4))
 
         data = self.partitions_cfg_to_json(data)
@@ -296,7 +294,6 @@ class OgVirtualOperations:
         return data
 
     def setup(self, request, ogRest):
-        path = f'{self.OG_PATH}/partitions.json'
         self.poweroff_guest()
         self.refresh(ogRest)
 
@@ -320,7 +317,7 @@ class OgVirtualOperations:
             g.mkfs(part["filesystem"].lower(), partitions[0])
             g.close()
 
-            with open(path, 'r+') as f:
+            with open(self.OG_PARTITIONS_CFG_PATH, 'r+') as f:
                 data = json.loads(f.read())
                 if part['code'] == 'LINUX':
                     data['partition_setup'][i]['code'] = '0083'
