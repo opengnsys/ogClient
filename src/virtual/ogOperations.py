@@ -268,7 +268,7 @@ class OgVirtualOperations:
                         g = guestfs.GuestFS(python_return_dict=True)
                         g.add_drive_opts(part['virt-drive'],
                                          format="qcow2",
-                                         readonly=0)
+                                         readonly=1)
                         g.launch()
                         devices = g.list_devices()
                         assert(len(devices) == 1)
