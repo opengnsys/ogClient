@@ -11,6 +11,7 @@ import select
 import socket
 import time
 import email
+import platform
 from io import StringIO
 
 from src.restRequest import *
@@ -23,19 +24,23 @@ class State(Enum):
 	FORCE_DISCONNECTED = 2
 
 class ogClient:
-	def __init__(self, ip, port, mode, samba_config=None):
-		if mode not in {'virtual', 'linux'}:
+	def __init__(self, config):
+		self.CONFIG = config
+
+		self.mode = self.CONFIG['opengnsys']['mode']
+		if self.mode not in {'virtual', 'linux'}:
 			raise ValueError('Mode not supported.')
+		if self.mode == 'linux' and platform.system() != 'Linux':
+			raise ValueError('Linux mode not supported on '
+					 'non-Linux platform.')
 
-		if samba_config:
-			assert('user' in samba_config)
-			assert('pass' in samba_config)
+		if self.CONFIG['samba']['activate']:
+			assert('user' in self.CONFIG['samba'])
+			assert('pass' in self.CONFIG['samba'])
 
-		self.ip = ip
-		self.port = port
-		self.mode = mode
-		self.samba_config = samba_config
-		self.ogrest = ogRest(self.mode, self.samba_config)
+		self.ip = self.CONFIG['opengnsys']['ip']
+		self.port = self.CONFIG['opengnsys']['port']
+		self.ogrest = ogRest(self.CONFIG)
 
 	def get_socket(self):
 		return self.sock
