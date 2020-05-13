@@ -20,10 +20,12 @@ import re
 import math
 import sys
 import enum
+import time
 
 class OgVM:
     DEFAULT_CPU = 'host'
-    DEFAULT_VGA = 'std'
+    DEFAULT_VGA = 'VGA'
+    DEFAULT_QMP_IP = 'localhost'
     DEFAULT_QMP_PORT = 4444
 
     class State(enum.Enum):
@@ -35,12 +37,16 @@ class OgVM:
                  memory=None,
                  cpu=DEFAULT_CPU,
                  vga=DEFAULT_VGA,
-                 qmp_port=DEFAULT_QMP_PORT):
+                 qmp_ip=DEFAULT_QMP_IP,
+                 qmp_port=DEFAULT_QMP_PORT,
+                 vnc_params=None):
         self.partition_path = partition_path
         self.cpu = cpu
         self.vga = vga
+        self.qmp_ip = qmp_ip
         self.qmp_port = qmp_port
         self.proc = None
+        self.vnc_params = vnc_params
 
         if memory:
             self.mem = memory
@@ -52,11 +58,28 @@ class OgVM:
 
 
     def run_vm(self):
-        cmd = (f'qemu-system-x86_64 -hda {self.partition_path} '
-               f'-qmp tcp:localhost:4444,server,nowait --enable-kvm '
-               f'-vga {self.vga} -display gtk -cpu {self.cpu} -m {self.mem}M '
-               f'-boot c -full-screen')
+        if self.vnc_params:
+            vnc_str = f'-vnc 0.0.0.0:0,password'
+        else:
+            vnc_str = ''
+
+        cmd = (f'qemu-system-x86_64 -accel kvm -cpu {self.cpu} -smp 4 '
+               f'-drive file={self.partition_path},if=virtio '
+               f'-qmp tcp:localhost:4444,server,nowait '
+               f'-device {self.vga},vgamem_mb=128 -display gtk '
+               f'-m {self.mem}M -boot c -full-screen {vnc_str}')
         self.proc = subprocess.Popen([cmd], shell=True)
+
+        if self.vnc_params:
+            # Wait for QMP to be available.
+            time.sleep(10)
+            qmp = OgQMP(self.qmp_ip, self.qmp_port)
+            cmd = { "execute": "change",
+                    "arguments": { "device": "vnc",
+                                   "target": "password",
+                                   "arg": str(self.vnc_params['pass']) } }
+            qmp.talk(str(cmd))
+            qmp.disconnect()
 
 class OgQMP:
     QMP_TIMEOUT = 5
@@ -203,7 +226,10 @@ class OgVirtualOperations:
         partition = request.getPartition()
 
         part_path = f'{self.OG_PARTITIONS_PATH}/disk{disk}_part{partition}.qcow2'
-        qemu = OgVM(part_path)
+        if ogRest.CONFIG['vnc']['activate']:
+            qemu = OgVM(part_path, vnc_params=ogRest.CONFIG['vnc'])
+        else:
+            qemu = OgVM(part_path)
         qemu.run_vm()
 
     def partitions_cfg_to_json(self, data):
