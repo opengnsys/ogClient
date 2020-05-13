@@ -217,9 +217,8 @@ class OgVirtualOperations:
             pass
         return installed_os
 
-    def execCMD(self, request, ogRest):
-        # TODO Implement.
-        raise NotImplementedError
+    def shellrun(self, request, ogRest):
+        return
 
     def session(self, request, ogRest):
         disk = request.getDisk()

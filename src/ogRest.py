@@ -79,7 +79,7 @@ class ogThread():
 			return
 
 		try:
-			shellout = ogRest.operations.execCMD(request, ogRest)
+			shellout = ogRest.operations.shellrun(request, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
 			client.send(response.get())
