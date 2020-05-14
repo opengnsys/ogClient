@@ -68,7 +68,7 @@ class OgLinuxOperations:
         else:
             subprocess.call(['/sbin/reboot'])
 
-    def shellrun(self, request, ogRest)
+    def shellrun(self, request, ogRest):
         cmd = request.getrun()
         cmds = cmd.split(";|\n\r")
 
