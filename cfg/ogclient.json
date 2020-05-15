@@ -8,7 +8,7 @@
 		"url_log": "http://localhost/cgi-bin/httpd-log.sh"
 	},
 	"samba": {
-		"activate": true
+		"activate": true,
 		"user": "opengnsys",
 		"pass": "og"
 	},
