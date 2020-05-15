@@ -251,7 +251,7 @@ class ogRest():
 		self.samba_config = self.CONFIG['samba']
 
 		if self.mode == 'linux':
-			self.operations = OgLinuxOperations()
+			self.operations = OgLinuxOperations(self.CONFIG)
 		elif self.mode == 'virtual':
 			self.operations = OgVirtualOperations()
 			threading.Thread(target=ogThread.check_vm_state_loop,

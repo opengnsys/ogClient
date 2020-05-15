@@ -7,18 +7,16 @@
 #
 
 import os
+import json
 import subprocess
 from src.ogConfig import *
 
 OG_SHELL = '/bin/bash'
 
 class OgLinuxOperations:
-
-    _ogconfig = ogConfig()
-    _config_path = f'{ogConfig.OG_PATH}ogclient/cfg/ogclient.cfg'
-    _ogconfig.parser_file(_config_path)
-    _url = _ogconfig.get_value_section('opengnsys', 'url')
-    _url_log = _ogconfig.get_value_section('opengnsys', 'url_log')
+    def __init__(self, config):
+        _url = config['opengnsys']['url']
+        _url_log = config['opengnsys']['url_log']
 
     def _restartBrowser(self, url):
         try:
