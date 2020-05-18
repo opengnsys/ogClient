@@ -273,10 +273,13 @@ class OgVirtualOperations:
                         assert(len(devices) == 1)
                         partitions = g.list_partitions()
                         assert(len(partitions) == 1)
+                        filesystems_dict = g.list_filesystems()
+                        assert(len(filesystems_dict) == 1)
                         g.mount(partitions[0], '/')
                         used_disk = g.du('/')
                         g.umount_all()
                         total_size = g.disk_virtual_size(part['virt-drive']) / 1024
+
                         part['used_size'] = int(100 * used_disk / total_size)
                         part['size'] = total_size
                         root = g.inspect_os()
@@ -285,6 +288,12 @@ class OgVirtualOperations:
                                          f'{g.inspect_get_product_name(root[0])}'
                         else:
                             part['os'] = ''
+                        filesystem = [fs for fs in filesystems_dict.values()][0]
+                        part['filesystem'] = filesystem.upper()
+                        if filesystem == 'ext4':
+                            part['code'] = '0083'
+                        elif filesystem == 'ntfs':
+                            part['code'] = '0007'
                         g.close()
                 f.seek(0)
                 f.write(json.dumps(data, indent=4))
