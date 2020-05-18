@@ -24,7 +24,7 @@ import time
 
 class OgVM:
     DEFAULT_CPU = 'host'
-    DEFAULT_VGA = 'VGA'
+    DEFAULT_VGA = 'virtio-vga'
     DEFAULT_QMP_IP = 'localhost'
     DEFAULT_QMP_PORT = 4444
 
@@ -66,7 +66,7 @@ class OgVM:
         cmd = (f'qemu-system-x86_64 -accel kvm -cpu {self.cpu} -smp 4 '
                f'-drive file={self.partition_path},if=virtio '
                f'-qmp tcp:localhost:4444,server,nowait '
-               f'-device {self.vga},vgamem_mb=128 -display gtk '
+               f'-device {self.vga} -display gtk '
                f'-m {self.mem}M -boot c -full-screen {vnc_str}')
         self.proc = subprocess.Popen([cmd], shell=True)
 
