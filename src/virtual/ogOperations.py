@@ -72,14 +72,13 @@ class OgVM:
 
         if self.vnc_params:
             # Wait for QMP to be available.
-            time.sleep(10)
-            qmp = OgQMP(self.qmp_ip, self.qmp_port)
+            time.sleep(20)
             cmd = { "execute": "change",
                     "arguments": { "device": "vnc",
                                    "target": "password",
                                    "arg": str(self.vnc_params['pass']) } }
-            qmp.talk(str(cmd))
-            qmp.disconnect()
+            with OgQMP(self.qmp_ip, self.qmp_port) as qmp:
+                qmp.talk(str(cmd))
 
 class OgQMP:
     QMP_TIMEOUT = 5
@@ -88,10 +87,12 @@ class OgQMP:
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
+
+    def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setblocking(0)
         try:
-            self.sock.connect((ip, port))
+            self.sock.connect((self.ip, self.port))
         except socket.error as err:
             if err.errno == errno.ECONNREFUSED:
                 raise Exception('cannot connect to qemu')
@@ -99,40 +100,52 @@ class OgQMP:
                 pass
 
         readset = [ self.sock ]
-        writeset = [ self.sock ]
         readable, writable, exception = select.select(readset,
-                                                      writeset,
+                                                      [],
                                                       [],
                                                       OgQMP.QMP_TIMEOUT)
-        if self.sock in writable:
-            try:
-                self.sock.connect((self.ip, self.port))
-                print("connected")
-            except socket.error as err:
-                if err.errno == errno.ECONNREFUSED:
-                    raise Exception('cannot connect to qemu')
 
-        out = self.talk(str({"execute": "qmp_capabilities"}))
+        if self.sock in readable:
+            try:
+                out = self.recv()
+            except:
+                pass
+
         if 'QMP' not in out:
             raise Exception('cannot handshake qemu')
 
-    def talk(self, data):
-        try:
-            self.sock.send(bytes(data, 'utf-8'))
-        except:
-            raise Exception('cannot talk to qemu')
+        out = self.talk(str({"execute": "qmp_capabilities"}))
+        if 'return' not in out:
+            raise Exception('cannot handshake qemu')
 
-        readset = [ self.sock ]
-        readable, writable, exception = select.select(readset, [], [], 5)
-        if self.sock in readable:
+    def disconnect(self):
+        try:
+            self.sock.close()
+        except:
+            pass
+
+    def __enter__(self):
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.disconnect()
+
+    def talk(self, data, timeout=QMP_TIMEOUT):
+        writeset = [ self.sock ]
+        readable, writable, exception = select.select([],
+                                                      writeset,
+                                                      [],
+                                                      timeout)
+        if self.sock in writable:
             try:
-                out = self.sock.recv(4096).decode('utf-8')
-                out = json.loads(out)
-            except socket.error as err:
+                self.sock.send(bytes(data, 'utf-8'))
+            except:
                 raise Exception('cannot talk to qemu')
         else:
             raise Exception('timeout when talking to qemu')
-        return out
+
+        return self.recv(timeout=timeout)
 
     def recv(self, timeout=QMP_TIMEOUT):
         readset = [self.sock]
@@ -147,12 +160,6 @@ class OgQMP:
         else:
             raise Exception('timeout when talking to qemu')
         return out
-
-    def disconnect(self):
-        try:
-            self.sock.close()
-        except:
-            pass
 
 class OgVirtualOperations:
     def __init__(self):
@@ -171,16 +178,14 @@ class OgVirtualOperations:
 
     def poweroff_guest(self):
         try:
-            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
+            with OgQMP(self.IP, self.VIRTUAL_PORT) as qmp:
+                qmp.talk(str({"execute": "system_powerdown"}))
+                out = qmp.recv()
+                assert(out['event'] == 'POWERDOWN')
+                out = qmp.recv(timeout=OgQMP.QMP_POWEROFF_TIMEOUT)
+                assert(out['event'] == 'SHUTDOWN')
         except:
             return
-
-        qmp.talk(str({"execute": "system_powerdown"}))
-        out = qmp.recv()
-        assert(out['event'] == 'POWERDOWN')
-        out = qmp.recv(timeout=OgQMP.QMP_POWEROFF_TIMEOUT)
-        assert(out['event'] == 'SHUTDOWN')
-        qmp.disconnect()
 
     def poweroff_host(self):
         subprocess.run(['/sbin/poweroff'])
@@ -191,16 +196,15 @@ class OgVirtualOperations:
 
     def reboot(self):
         try:
-            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-            qmp.talk(str({"execute": "system_reset"}))
-            qmp.disconnect()
+            with OgQMP(self.IP, self.VIRTUAL_PORT) as qmp:
+                qmp.talk(str({"execute": "system_reset"}))
         except:
             pass
 
     def check_vm_state(self):
         try:
-            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-            qmp.disconnect()
+            with OgQMP(self.IP, self.VIRTUAL_PORT) as qmp:
+                pass
             return OgVM.State.RUNNING
         except:
             return OgVM.State.STOPPED
@@ -242,8 +246,8 @@ class OgVirtualOperations:
     def refresh(self, ogRest):
         try:
             # Return last partitions setup in case VM is running.
-            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-            qmp.disconnect()
+            with OgQMP(self.IP, self.VIRTUAL_PORT) as qmp:
+                pass
             with open(self.OG_PARTITIONS_CFG_PATH, 'r') as f:
                 data = json.loads(f.read())
             data = self.partitions_cfg_to_json(data)
@@ -523,17 +527,12 @@ class OgVirtualOperations:
 
     def hardware(self, path, ogRest):
         try:
-            qmp = OgQMP(self.IP, self.VIRTUAL_PORT)
-            pci_data = qmp.talk(str({"execute": "query-pci"}))
-            mem_data = qmp.talk(str({"execute": "query-memory-size-summary"}))
-            cpu_data = qmp.talk(str({"execute": "query-cpus-fast"}))
-            qmp.disconnect()
+            with OgQMP(self.IP, self.VIRTUAL_PORT) as qmp:
+                pci_data = qmp.talk(str({"execute": "query-pci"}))
+                mem_data = qmp.talk(str({"execute": "query-memory-size-summary"}))
+                cpu_data = qmp.talk(str({"execute": "query-cpus-fast"}))
         except:
-            pass
-
-        pci_data = json.loads(pci_data)
-        mem_data = json.loads(mem_data)
-        cpu_data = json.loads(cpu_data)
+            return
 
         pci_data = pci_data['return'][0]['devices']
         pci_list = self.parse_pci()
