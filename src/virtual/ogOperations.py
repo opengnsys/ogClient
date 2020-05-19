@@ -326,6 +326,9 @@ class OgVirtualOperations:
                 data['partition_setup'].append(part_json)
             with open(self.OG_PARTITIONS_CFG_PATH, 'w+') as f:
                 f.write(json.dumps(data, indent=4))
+        except:
+            with open(self.OG_PARTITIONS_CFG_PATH, 'r') as f:
+                data = json.load(f)
 
         data = self.partitions_cfg_to_json(data)
 
