@@ -19,7 +19,6 @@ import signal
 from src.restRequest import *
 
 from src.linux.ogOperations import OgLinuxOperations
-from src.virtual.ogOperations import OgVirtualOperations, OgVM
 
 class ThreadState(Enum):
 	IDLE = 0
@@ -253,6 +252,8 @@ class ogRest():
 		if self.mode == 'linux':
 			self.operations = OgLinuxOperations(self.CONFIG)
 		elif self.mode == 'virtual':
+			from src.virtual.ogOperations import (OgVM,
+				OgVirtualOperations)
 			self.operations = OgVirtualOperations()
 			threading.Thread(target=ogThread.check_vm_state_loop,
 					 args=(self,)).start()
