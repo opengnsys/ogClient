@@ -15,8 +15,8 @@ OG_SHELL = '/bin/bash'
 
 class OgLinuxOperations:
     def __init__(self, config):
-        _url = config['opengnsys']['url']
-        _url_log = config['opengnsys']['url_log']
+        self._url = config['opengnsys']['url']
+        self._url_log = config['opengnsys']['url_log']
 
     def _restartBrowser(self, url):
         try:
@@ -70,7 +70,7 @@ class OgLinuxOperations:
         cmd = request.getrun()
         cmds = cmd.split(";|\n\r")
 
-        self._restartBrowser(OgLinuxOperations._url_log)
+        self._restartBrowser(self._url_log)
 
         try:
             ogRest.proc = subprocess.Popen(cmds,
@@ -83,7 +83,7 @@ class OgLinuxOperations:
 
         cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
         result = subprocess.check_output([cmd_get_conf], shell=True)
-        self._restartBrowser(OgLinuxOperations._url)
+        self._restartBrowser(self._url)
 
         return output.decode('utf-8')
 
@@ -107,7 +107,7 @@ class OgLinuxOperations:
         disk = request.getDisk()
         partition = request.getPartition()
 
-        self._restartBrowser(OgLinuxOperations._url_log)
+        self._restartBrowser(self._url_log)
 
         try:
             cmd = f'{ogConfig.OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
@@ -121,7 +121,7 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
-        self._restartBrowser(OgLinuxOperations._url)
+        self._restartBrowser(self._url)
 
         software = ''
         with open(path, 'r') as f:
@@ -129,7 +129,7 @@ class OgLinuxOperations:
         return software
 
     def hardware(self, path, ogRest):
-        self._restartBrowser(OgLinuxOperations._url_log)
+        self._restartBrowser(self._url_log)
 
         try:
             cmd = f'{ogConfig.OG_PATH}interfaceAdm/InventarioHardware {path}'
@@ -141,7 +141,7 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
-        self._restartBrowser(OgLinuxOperations._url)
+        self._restartBrowser(self._url)
 
         return output.decode('utf-8')
 
@@ -172,7 +172,7 @@ class OgLinuxOperations:
 
         cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
         result = subprocess.check_output([cmd_get_conf], shell=True)
-        self._restartBrowser(OgLinuxOperations._url)
+        self._restartBrowser(self._url)
 
         return self.parseGetConf(result.decode('utf-8'))
 
@@ -187,7 +187,7 @@ class OgLinuxOperations:
         cmd = f'{ogConfig.OG_PATH}interfaceAdm/RestaurarImagen {disk} {partition} ' \
               f'{name} {repo} {ctype}'
 
-        self._restartBrowser(OgLinuxOperations._url_log)
+        self._restartBrowser(self._url_log)
 
         try:
             ogRest.proc = subprocess.Popen([cmd],
@@ -200,7 +200,7 @@ class OgLinuxOperations:
 
         cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
         result = subprocess.check_output([cmd_get_conf], shell=True)
-        self._restartBrowser(OgLinuxOperations._url)
+        self._restartBrowser(self._url)
 
         return output.decode('utf-8')
 
@@ -214,7 +214,7 @@ class OgLinuxOperations:
         cmd_create_image = f'{ogConfig.OG_PATH}interfaceAdm/CrearImagen {disk} ' \
                    f'{partition} {name} {repo}'
 
-        self._restartBrowser(OgLinuxOperations._url_log)
+        self._restartBrowser(self._url_log)
 
         try:
             ogRest.proc = subprocess.Popen([cmd_software],
@@ -237,12 +237,12 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
-        self._restartBrowser(OgLinuxOperations._url)
+        self._restartBrowser(self._url)
 
         return output.decode('utf-8')
 
     def refresh(self, ogRest):
-        self._restartBrowser(OgLinuxOperations._url_log)
+        self._restartBrowser(self._url_log)
 
         try:
             cmd = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
@@ -254,6 +254,6 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
-        self._restartBrowser(OgLinuxOperations._url)
+        self._restartBrowser(self._url)
 
         return self.parseGetConf(output.decode('utf-8'))
