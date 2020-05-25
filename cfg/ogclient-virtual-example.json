@@ -1,0 +1,19 @@
+{
+	"opengnsys": {
+		"ip": "192.168.2.2",
+		"port": 8889,
+		"log": "DEBUG",
+		"mode": "virtual",
+		"url": "https://127.0.0.1/opengnsys/varios/menubrowser.php",
+		"url_log": "http://localhost/cgi-bin/httpd-log.sh"
+	},
+	"samba": {
+		"activate": true,
+		"user": "opengnsys",
+		"pass": "og"
+	},
+	"vnc": {
+		"activate": true,
+		"pass": "ogvnc"
+	}
+}
