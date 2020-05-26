@@ -6,6 +6,7 @@
 # Free Software Foundation, version 3.
 #
 
+from src.ogRest import ThreadState
 import socket
 import errno
 import select
@@ -220,6 +221,17 @@ class OgVirtualOperations:
         except:
             pass
         return installed_os
+
+    def check_vm_state_loop(self, ogRest):
+        POLLING_WAIT_TIME = 12
+        while True:
+            time.sleep(POLLING_WAIT_TIME)
+            state = self.check_vm_state()
+            installed_os = self.get_installed_os()
+            if state == OgVM.State.STOPPED and \
+               ogRest.state == ThreadState.IDLE and \
+               len(installed_os) > 0:
+                self.poweroff_host()
 
     def shellrun(self, request, ogRest):
         return

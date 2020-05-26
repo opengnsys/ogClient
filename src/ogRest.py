@@ -96,17 +96,6 @@ class ogThread():
 
 		ogRest.state = ThreadState.IDLE
 
-	def check_vm_state_loop(ogRest):
-		POLLING_WAIT_TIME = 12
-		while True:
-			time.sleep(POLLING_WAIT_TIME)
-			state = ogRest.operations.check_vm_state()
-			installed_os = ogRest.operations.get_installed_os()
-			if state == OgVM.State.STOPPED and \
-			   ogRest.state == ThreadState.IDLE and \
-			   len(installed_os) > 0:
-				ogRest.operations.poweroff_host()
-
 	def poweroff(ogRest):
 		time.sleep(2)
 		ogRest.operations.poweroff()
@@ -252,10 +241,10 @@ class ogRest():
 		if self.mode == 'linux':
 			self.operations = OgLinuxOperations(self.CONFIG)
 		elif self.mode == 'virtual':
-			from src.virtual.ogOperations import (OgVM,
-				OgVirtualOperations)
+			from src.virtual.ogOperations import \
+				OgVirtualOperations
 			self.operations = OgVirtualOperations()
-			threading.Thread(target=ogThread.check_vm_state_loop,
+			threading.Thread(target=self.operations.check_vm_state_loop,
 					 args=(self,)).start()
 		else:
 			raise ValueError('Mode not supported.')
