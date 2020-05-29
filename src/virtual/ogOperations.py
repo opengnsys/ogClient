@@ -446,6 +446,7 @@ class OgVirtualOperations:
             return None
 
         subprocess.run([f'umount {self.OG_IMAGES_PATH}'], shell=True)
+        self.refresh(ogRest)
 
         return True
 
