@@ -25,7 +25,7 @@ def main():
 
 	MODE = CONFIG['opengnsys']['mode']
 	URL = CONFIG['opengnsys']['url']
-	if MODE == 'linux':
+	if MODE == 'live':
 		proc = subprocess.Popen(["browser", "-qws", URL])
 
 	client = ogClient(config=CONFIG)

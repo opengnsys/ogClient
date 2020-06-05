@@ -238,7 +238,7 @@ class ogRest():
 		self.mode = self.CONFIG['opengnsys']['mode']
 		self.samba_config = self.CONFIG['samba']
 
-		if self.mode == 'linux':
+		if self.mode == 'live':
 			self.operations = OgLinuxOperations(self.CONFIG)
 		elif self.mode == 'virtual':
 			from src.virtual.ogOperations import \

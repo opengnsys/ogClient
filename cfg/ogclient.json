@@ -3,7 +3,7 @@
 		"ip": "127.0.0.1",
 		"port": 8889,
 		"log": "DEBUG",
-		"mode": "linux",
+		"mode": "live",
 		"url": "https://127.0.0.1/opengnsys/varios/menubrowser.php",
 		"url_log": "http://localhost/cgi-bin/httpd-log.sh"
 	},
