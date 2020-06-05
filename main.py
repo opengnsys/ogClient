@@ -11,12 +11,11 @@
 import json
 import subprocess
 from src.ogClient import *
-from src.ogConfig import *
 from signal import signal, SIGPIPE, SIG_DFL
 
 def main():
 	signal(SIGPIPE, SIG_DFL)
-	config_path = f'{ogConfig.OG_PATH}ogclient/cfg/ogclient.json'
+	config_path = f'{ogClient.OG_PATH}ogclient/cfg/ogclient.json'
 	try:
 		with open(config_path, 'r') as f:
 			CONFIG = json.load(f)

@@ -24,6 +24,8 @@ class State(Enum):
 	FORCE_DISCONNECTED = 2
 
 class ogClient:
+	OG_PATH = '/opt/opengnsys/'
+
 	def __init__(self, config):
 		self.CONFIG = config
 

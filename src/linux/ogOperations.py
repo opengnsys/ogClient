@@ -9,7 +9,7 @@
 import os
 import json
 import subprocess
-from src.ogConfig import *
+from src.ogClient import ogClient
 
 OG_SHELL = '/bin/bash'
 
@@ -52,16 +52,16 @@ class OgLinuxOperations:
 
     def poweroff(self):
         if os.path.exists('/scripts/oginit'):
-            cmd = f'source {ogConfig.OG_PATH}etc/preinit/loadenviron.sh; ' \
-                  f'{ogConfig.OG_PATH}scripts/poweroff'
+            cmd = f'source {ogClient.OG_PATH}etc/preinit/loadenviron.sh; ' \
+                  f'{ogClient.OG_PATH}scripts/poweroff'
             subprocess.call([cmd], shell=True, executable=OG_SHELL)
         else:
             subprocess.call(['/sbin/poweroff'])
 
     def reboot(self):
         if os.path.exists('/scripts/oginit'):
-            cmd = f'source {ogConfig.OG_PATH}etc/preinit/loadenviron.sh; ' \
-                  f'{ogConfig.OG_PATH}scripts/reboot'
+            cmd = f'source {ogClient.OG_PATH}etc/preinit/loadenviron.sh; ' \
+                  f'{ogClient.OG_PATH}scripts/reboot'
             subprocess.call([cmd], shell=True, executable=OG_SHELL)
         else:
             subprocess.call(['/sbin/reboot'])
@@ -81,7 +81,7 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
-        cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
+        cmd_get_conf = f'{ogClient.OG_PATH}interfaceAdm/getConfiguration'
         result = subprocess.check_output([cmd_get_conf], shell=True)
         self._restartBrowser(self._url)
 
@@ -90,7 +90,7 @@ class OgLinuxOperations:
     def session(self, request, ogRest):
         disk = request.getDisk()
         partition = request.getPartition()
-        cmd = f'{ogConfig.OG_PATH}interfaceAdm/IniciarSesion {disk} {partition}'
+        cmd = f'{ogClient.OG_PATH}interfaceAdm/IniciarSesion {disk} {partition}'
 
         try:
             ogRest.proc = subprocess.Popen([cmd],
@@ -110,7 +110,7 @@ class OgLinuxOperations:
         self._restartBrowser(self._url_log)
 
         try:
-            cmd = f'{ogConfig.OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
+            cmd = f'{ogClient.OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
                   f'{partition} {path}'
 
             ogRest.proc = subprocess.Popen([cmd],
@@ -132,7 +132,7 @@ class OgLinuxOperations:
         self._restartBrowser(self._url_log)
 
         try:
-            cmd = f'{ogConfig.OG_PATH}interfaceAdm/InventarioHardware {path}'
+            cmd = f'{ogClient.OG_PATH}interfaceAdm/InventarioHardware {path}'
             ogRest.proc = subprocess.Popen([cmd],
                                stdout=subprocess.PIPE,
                                shell=True,
@@ -160,7 +160,7 @@ class OgLinuxOperations:
             if ogRest.terminated:
                 break
 
-        cmd = f'{ogConfig.OG_PATH}interfaceAdm/Configurar {disk} {cfg}'
+        cmd = f'{ogClient.OG_PATH}interfaceAdm/Configurar {disk} {cfg}'
         try:
             ogRest.proc = subprocess.Popen([cmd],
                                stdout=subprocess.PIPE,
@@ -170,7 +170,7 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
-        cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
+        cmd_get_conf = f'{ogClient.OG_PATH}interfaceAdm/getConfiguration'
         result = subprocess.check_output([cmd_get_conf], shell=True)
         self._restartBrowser(self._url)
 
@@ -184,7 +184,7 @@ class OgLinuxOperations:
         ctype = request.getType()
         profile = request.getProfile()
         cid = request.getId()
-        cmd = f'{ogConfig.OG_PATH}interfaceAdm/RestaurarImagen {disk} {partition} ' \
+        cmd = f'{ogClient.OG_PATH}interfaceAdm/RestaurarImagen {disk} {partition} ' \
               f'{name} {repo} {ctype}'
 
         self._restartBrowser(self._url_log)
@@ -198,7 +198,7 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
-        cmd_get_conf = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
+        cmd_get_conf = f'{ogClient.OG_PATH}interfaceAdm/getConfiguration'
         result = subprocess.check_output([cmd_get_conf], shell=True)
         self._restartBrowser(self._url)
 
@@ -209,9 +209,9 @@ class OgLinuxOperations:
         partition = request.getPartition()
         name = request.getName()
         repo = request.getRepo()
-        cmd_software = f'{ogConfig.OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
+        cmd_software = f'{ogClient.OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
                    f'{partition} {path}'
-        cmd_create_image = f'{ogConfig.OG_PATH}interfaceAdm/CrearImagen {disk} ' \
+        cmd_create_image = f'{ogClient.OG_PATH}interfaceAdm/CrearImagen {disk} ' \
                    f'{partition} {name} {repo}'
 
         self._restartBrowser(self._url_log)
@@ -245,7 +245,7 @@ class OgLinuxOperations:
         self._restartBrowser(self._url_log)
 
         try:
-            cmd = f'{ogConfig.OG_PATH}interfaceAdm/getConfiguration'
+            cmd = f'{ogClient.OG_PATH}interfaceAdm/getConfiguration'
             ogRest.proc = subprocess.Popen([cmd],
                                stdout=subprocess.PIPE,
                                shell=True,
