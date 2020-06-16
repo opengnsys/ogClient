@@ -15,6 +15,7 @@ import queue
 import sys
 import os
 import signal
+import syslog
 
 from src.restRequest import *
 
@@ -52,6 +53,13 @@ class restResponse():
 			self.msg = 'HTTP/1.0 503 Service Unavailable'
 		else:
 			return self.msg
+
+		if response in {ogResponses.OK, ogResponses.IN_PROGRESS}:
+			syslog.syslog(syslog.LOG_INFO,
+				      self.msg[:ogRest.LOG_LENGTH])
+		else:
+			syslog.syslog(syslog.LOG_ERR,
+				      self.msg[:ogRest.LOG_LENGTH])
 
 		self.msg += '\r\n'
 
@@ -228,6 +236,8 @@ class ogResponses(Enum):
 	SERVICE_UNAVAILABLE=5
 
 class ogRest():
+	LOG_LENGTH = 32
+
 	def __init__(self, config):
 		self.proc = None
 		self.terminated = False
@@ -252,11 +262,16 @@ class ogRest():
 		method = request.get_method()
 		URI = request.get_uri()
 
+		syslog.syslog(syslog.LOG_DEBUG, f'{method}{URI[:ogRest.LOG_LENGTH]}')
+
 		if (not "stop" in URI and
 		    not "reboot" in URI and
 		    not "poweroff" in URI and
 		    not "probe" in URI):
 			if self.state == ThreadState.BUSY:
+				syslog.syslog(syslog.LOG_ERR,
+					      'Request has been received '
+					      'while ogClient is busy')
 				response = restResponse(ogResponses.SERVICE_UNAVAILABLE)
 				client.send(response.get())
 				return
@@ -271,6 +286,9 @@ class ogRest():
 			elif "refresh" in URI:
 				self.process_refresh(client)
 			else:
+				syslog.syslog(syslog.LOG_ERR,
+					      f'Unsupported request: '
+					      f'{method[:ogRest.LOG_LENGTH]}')
 				response = restResponse(ogResponses.BAD_REQUEST)
 				client.send(response.get())
 		elif ("POST" in method):
@@ -295,6 +313,9 @@ class ogRest():
 			elif ("image/create" in URI):
 				self.process_imagecreate(client, request)
 			else:
+				syslog.syslog(syslog.LOG_ERR,
+					      f'Unsupported request: '
+					      f'{method[:ogRest.LOG_LENGTH]}')
 				response = restResponse(ogResponses.BAD_REQUEST)
 				client.send(response.get())
 		else:
