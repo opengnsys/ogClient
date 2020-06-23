@@ -195,6 +195,8 @@ class OgLinuxOperations:
                                shell=True,
                                executable=OG_SHELL)
             (output, error) = ogRest.proc.communicate()
+            if (ogRest.proc.returncode):
+                raise Exception
         except:
             raise ValueError('Error: Incorrect command value')
 
