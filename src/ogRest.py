@@ -364,7 +364,10 @@ class ogRest():
 		json_body = jsonBody()
 
 		if self.state != ThreadState.BUSY:
-			json_body.add_element('status', 'OPG')
+			if self.mode == 'live':
+				json_body.add_element('status', 'OPG')
+			elif self.mode == 'virtual':
+				json_body.add_element('status', 'VDI')
 			response = restResponse(ogResponses.OK, json_body)
 		else:
 			json_body.add_element('status', 'BSY')
