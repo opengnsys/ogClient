@@ -13,7 +13,7 @@ class Client():
 
     def __init__(self):
         self.null = open(os.devnull, 'wb')
-        self.proc = subprocess.Popen(['python3', 'main.py'],
+        self.proc = subprocess.Popen(['python3', 'ogclient'],
                                      cwd='../',
                                      stdout=self.null,
                                      stderr=self.null)

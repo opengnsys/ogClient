@@ -7,7 +7,7 @@ setup(name='ogclient',
       author_email='soporte-og@soleta.eu',
       url='https://github.com/opengnsys/ogClient',
       packages=['src', 'src.linux', 'src.virtual'],
-      scripts=['main.py'],
+      scripts=['ogclient'],
       data_files=[('cfg', ['cfg/ogclient.json']),
                   ('', ['LICENSE'])]
 )
