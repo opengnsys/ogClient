@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/python3
 
 #
 # Copyright (C) 2020 Soleta Networks <info@soleta.eu>
