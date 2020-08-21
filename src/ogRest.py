@@ -120,7 +120,7 @@ class ogThread():
 
 		response = restResponse(ogResponses.OK)
 		client.send(response.get())
-		ogRest.state = ThreadState.IDLE
+		client.disconnect()
 
 	def software(client, request, path, ogRest):
 		try:

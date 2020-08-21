@@ -119,6 +119,7 @@ class ogClient:
 
 	def disconnect(self):
 		self.state = State.FORCE_DISCONNECTED
+		self.sock.shutdown(socket.SHUT_RDWR)
 		self.sock.close()
 
 	def run(self):
