@@ -55,6 +55,7 @@ class ogClient:
 		self.data = ""
 		self.trailer = False
 		self.content_len = 0
+		self.header_len = 0
 
 		try:
 			self.sock.connect((self.ip, self.port))
@@ -98,23 +99,27 @@ class ogClient:
 		request = restRequest()
 
 		if not self.trailer:
-			if self.data.find("\r\n") > 0:
+			header_len = self.data.find("\r\n")
+			if header_len > 0:
 				# https://stackoverflow.com/questions/4685217/parse-raw-http-headers
 				request_line, headers_alone = self.data.split('\n', 1)
 				headers = email.message_from_file(StringIO(headers_alone))
 
-				if 'content-length' in headers.keys():
-					self.content_len = int(headers['content-length'])
+				if 'Content-Length' in headers.keys():
+					self.content_len = int(headers['Content-Length'])
 
 				self.trailer = True
+				# Add 2 because self.data.find("\r\n") does not count "\r\n" for the length
+				self.header_len = header_len + 2
 
-		if self.trailer and len(self.data) >= self.content_len:
+		if self.trailer and (len(self.data) >= self.content_len + self.header_len):
 			request.parser(self.data)
 			self.ogrest.process_request(request, self)
 
 			# Cleanup state information from request
 			self.data = ""
 			self.content_len = 0
+			self.header_len = 0
 			self.trailer = False
 
 	def disconnect(self):
