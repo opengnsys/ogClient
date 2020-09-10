@@ -239,9 +239,22 @@ class OgLinuxOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
+        with open('/tmp/image.info') as file_info:
+            line = file_info.readline().rstrip()
+
+        image_info = {}
+
+        (image_info['clonator'],
+         image_info['compressor'],
+         image_info['filesystem'],
+         image_info['datasize'],
+         image_info['clientname']) = line.split(':', 5)
+
+        os.remove('/tmp/image.info')
+
         self._restartBrowser(self._url)
 
-        return output.decode('utf-8')
+        return image_info
 
     def refresh(self, ogRest):
         self._restartBrowser(self._url_log)

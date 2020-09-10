@@ -191,7 +191,9 @@ class ogThread():
 
 	def image_create(client, path, request, ogRest):
 		try:
-			ogRest.operations.image_create(path, request, ogRest)
+			image_info = ogRest.operations.image_create(path,
+								    request,
+								    ogRest)
 			software = ogRest.operations.software(request, path, ogRest)
 		except ValueError as err:
 			response = restResponse(ogResponses.INTERNAL_ERR)
@@ -207,6 +209,10 @@ class ogThread():
 		json_body.add_element('name', request.getName())
 		json_body.add_element('repository', request.getRepo())
 		json_body.add_element('software', software)
+		json_body.add_element('clonator', image_info['clonator'])
+		json_body.add_element('compressor', image_info['compressor'])
+		json_body.add_element('filesystem', image_info['filesystem'])
+		json_body.add_element('datasize', int(image_info['datasize']))
 
 		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
