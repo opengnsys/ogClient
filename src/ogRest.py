@@ -201,6 +201,9 @@ class ogThread():
 			ogRest.state = ThreadState.IDLE
 			return
 
+		kibi = 1024
+		datasize = int(image_info['datasize']) * kibi
+
 		json_body = jsonBody()
 		json_body.add_element('disk', request.getDisk())
 		json_body.add_element('partition', request.getPartition())
@@ -212,7 +215,7 @@ class ogThread():
 		json_body.add_element('clonator', image_info['clonator'])
 		json_body.add_element('compressor', image_info['compressor'])
 		json_body.add_element('filesystem', image_info['filesystem'])
-		json_body.add_element('datasize', int(image_info['datasize']))
+		json_body.add_element('datasize', datasize)
 
 		response = restResponse(ogResponses.OK, json_body)
 		client.send(response.get())
