@@ -9,5 +9,5 @@ setup(name='ogclient',
       packages=['src', 'src.linux', 'src.virtual'],
       scripts=['ogclient'],
       data_files=[('cfg', ['cfg/ogclient.json']),
-                  ('', ['LICENSE'])]
+                  ('', ['COPYING'])]
 )
