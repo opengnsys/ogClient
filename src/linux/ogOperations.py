@@ -27,7 +27,7 @@ class OgLinuxOperations:
 
     def parseGetConf(self, out):
         parsed = {'serial_number': '',
-              'disk_setup': '',
+              'disk_setup': list(),
               'partition_setup': list()}
         configs = out.split('\n')
         for line in configs[:-1]:
@@ -45,7 +45,7 @@ class OgLinuxOperations:
                 part_setup['size'] = params['tam']
                 part_setup['used_size'] = params['uso']
                 if part_setup['partition'] == '0':
-                    parsed['disk_setup'] = part_setup
+                    parsed['disk_setup'].append(part_setup)
                 else:
                     parsed['partition_setup'].append(part_setup)
         return parsed
