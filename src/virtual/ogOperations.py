@@ -252,7 +252,9 @@ class OgVirtualOperations:
             part.pop('virt-drive')
             for k, v in part.items():
                 part[k] = str(v)
-        data['disk_setup'] = {k: str(v) for k, v in data['disk_setup'].items()}
+        for disk in data['disk_setup']:
+            for k, v in disk.items():
+                disk[k] = str(v)
         return data
 
     def refresh(self, ogRest):
@@ -318,13 +320,13 @@ class OgVirtualOperations:
             total_disk, used_disk, free_disk = shutil.disk_usage("/")
             free_disk = int(free_disk * self.USABLE_DISK)
             data = {'serial_number': '',
-                    'disk_setup': {'disk': 1,
+                    'disk_setup': [{'disk': 1,
                                    'partition': 0,
                                    'code': '0',
                                    'filesystem': '',
                                    'os': '',
                                    'size': int(free_disk / 1024),
-                                   'used_size': int(100 * used_disk / total_disk)},
+                                   'used_size': int(100 * used_disk / total_disk)}],
                     'partition_setup': []}
             for i in range(4):
                 part_json = {'disk': 1,
