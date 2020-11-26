@@ -146,6 +146,7 @@ class OgLinuxOperations:
         return output.decode('utf-8')
 
     def setup(self, request, ogRest):
+        table_type = request.getType()
         disk = request.getDisk()
         cache = request.getCache()
         cache_size = request.getCacheSize()
@@ -160,7 +161,7 @@ class OgLinuxOperations:
             if ogRest.terminated:
                 break
 
-        cmd = f'{ogClient.OG_PATH}interfaceAdm/Configurar {disk} {cfg}'
+        cmd = f'{ogClient.OG_PATH}interfaceAdm/Configurar {table_type} {cfg}'
         try:
             ogRest.proc = subprocess.Popen([cmd],
                                stdout=subprocess.PIPE,
