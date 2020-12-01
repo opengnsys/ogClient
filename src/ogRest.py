@@ -300,6 +300,7 @@ class ogRest():
 					      f'{method[:ogRest.LOG_LENGTH]}')
 				response = restResponse(ogResponses.BAD_REQUEST)
 				client.send(response.get())
+				self.state = ThreadState.IDLE
 		elif ("POST" in method):
 			if ("poweroff" in URI):
 				self.process_poweroff(client)
@@ -327,9 +328,11 @@ class ogRest():
 					      f'{method[:ogRest.LOG_LENGTH]}')
 				response = restResponse(ogResponses.BAD_REQUEST)
 				client.send(response.get())
+				self.state = ThreadState.IDLE
 		else:
 			response = restResponse(ogResponses.BAD_REQUEST)
 			client.send(response.get())
+			self.state = ThreadState.IDLE
 
 		return 0
 
