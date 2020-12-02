@@ -290,6 +290,8 @@ class ogRest():
 		if ("GET" in method):
 			if "hardware" in URI:
 				self.process_hardware(client)
+			elif ("software" in URI):
+				self.process_software(client, request)
 			elif ("run/schedule" in URI):
 				self.process_schedule(client)
 			elif "refresh" in URI:
@@ -312,8 +314,6 @@ class ogRest():
 				self.process_shellrun(client, request)
 			elif ("session" in URI):
 				self.process_session(client, request)
-			elif ("software" in URI):
-				self.process_software(client, request)
 			elif ("setup" in URI):
 				self.process_setup(client, request)
 			elif ("image/restore" in URI):
