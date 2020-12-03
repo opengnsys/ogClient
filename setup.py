@@ -6,7 +6,7 @@ setup(name='ogclient',
       author='Soleta OpenGnsys Support Team',
       author_email='soporte-og@soleta.eu',
       url='https://github.com/opengnsys/ogClient',
-      packages=['src', 'src.linux', 'src.virtual'],
+      packages=['src', 'src.live', 'src.virtual'],
       scripts=['ogclient'],
       data_files=[('cfg', ['cfg/ogclient.json']),
                   ('', ['COPYING'])]

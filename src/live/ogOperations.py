@@ -13,7 +13,7 @@ from src.ogClient import ogClient
 
 OG_SHELL = '/bin/bash'
 
-class OgLinuxOperations:
+class OgLiveOperations:
     def __init__(self, config):
         self._url = config['opengnsys']['url']
         self._url_log = config['opengnsys']['url_log']

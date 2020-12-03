@@ -256,8 +256,8 @@ class ogRest():
 		self.samba_config = self.CONFIG['samba']
 
 		if self.mode == 'live':
-			from src.linux.ogOperations import OgLinuxOperations
-			self.operations = OgLinuxOperations(self.CONFIG)
+			from src.live.ogOperations import OgLiveOperations
+			self.operations = OgLiveOperations(self.CONFIG)
 		elif self.mode == 'virtual':
 			from src.virtual.ogOperations import \
 				OgVirtualOperations
