@@ -240,6 +240,9 @@ class OgLiveOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
+        if ogRest.proc.returncode != 0:
+            raise ValueError('Error: Image creation failed')
+
         with open('/tmp/image.info') as file_info:
             line = file_info.readline().rstrip()
 
