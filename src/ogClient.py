@@ -51,6 +51,11 @@ class ogClient:
 		print('connecting...')
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sock.setblocking(0)
+		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+		self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 60)
+		self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 30)
+		self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 4)
+
 		self.state = State.CONNECTING
 		self.data = ""
 		self.trailer = False
