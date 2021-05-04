@@ -373,16 +373,20 @@ class ogRest():
 		threading.Thread(target=ogThread.poweroff, args=(self,)).start()
 
 	def process_probe(self, client):
+		try:
+			status = self.operations.probe(self)
+		except:
+			response = restResponse(ogResponses.INTERNAL_ERR)
+			client.send(response.get())
+			return
+
 		json_body = jsonBody()
+		for k, v in status.items():
+			json_body.add_element(k, v)
 
 		if self.state != ThreadState.BUSY:
-			if self.mode == 'live':
-				json_body.add_element('status', 'OPG')
-			elif self.mode == 'virtual':
-				json_body.add_element('status', 'VDI')
 			response = restResponse(ogResponses.OK, json_body)
 		else:
-			json_body.add_element('status', 'BSY')
 			response = restResponse(ogResponses.IN_PROGRESS, json_body)
 
 		client.send(response.get())

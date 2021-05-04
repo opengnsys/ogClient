@@ -600,3 +600,6 @@ class OgVirtualOperations:
             for k, v in device_names.items():
                 f.write(f'{k}={v}\n')
             f.truncate()
+
+    def probe(self, ogRest):
+        return {'status': 'VDI' if ogRest.state != ThreadState.BUSY else 'BSY'}
