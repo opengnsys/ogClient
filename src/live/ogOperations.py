@@ -40,6 +40,7 @@ class OgLiveOperations:
                 params = dict(param.split('=') for param in line.split('\t'))
                 # Parse partition configuration.
                 part_setup['disk'] = params['disk']
+                part_setup['disk_type'] = params.get('dtype', '')
                 part_setup['partition'] = params['par']
                 part_setup['code'] = params['cpt']
                 part_setup['filesystem'] = params['fsi']
