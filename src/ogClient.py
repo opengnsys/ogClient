@@ -104,7 +104,7 @@ class ogClient:
 		request = restRequest()
 
 		if not self.trailer:
-			header_len = self.data.find("\r\n")
+			header_len = self.data.find("\r\n\r\n")
 			if header_len > 0:
 				# https://stackoverflow.com/questions/4685217/parse-raw-http-headers
 				request_line, headers_alone = self.data.split('\n', 1)
@@ -114,8 +114,9 @@ class ogClient:
 					self.content_len = int(headers['Content-Length'])
 
 				self.trailer = True
-				# Add 2 because self.data.find("\r\n") does not count "\r\n" for the length
-				self.header_len = header_len + 2
+				# Add 4 because self.data.find("\r\n\r\n") does not count
+				# "\r\n\r\n" for the length
+				self.header_len = header_len + 4
 
 		if self.trailer and (len(self.data) >= self.content_len + self.header_len):
 			request.parser(self.data)
