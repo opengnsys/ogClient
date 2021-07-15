@@ -99,9 +99,9 @@ class ogClient:
 			print('failed to received ' + str(err))
 
 		if len(data) == 0:
-			self.state = State.CONNECTING
 			self.sock.close()
 			self.connect()
+			return
 
 		self.data = self.data + data
 		request = restRequest()
