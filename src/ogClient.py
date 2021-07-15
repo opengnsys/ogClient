@@ -47,6 +47,12 @@ class ogClient:
 	def get_state(self):
 		return self.state
 
+	def cleanup(self):
+		self.data = ""
+		self.content_len = 0
+		self.header_len = 0
+		self.trailer = False
+
 	def connect(self):
 		print('connecting...')
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -57,10 +63,7 @@ class ogClient:
 		self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 4)
 
 		self.state = State.CONNECTING
-		self.data = ""
-		self.trailer = False
-		self.content_len = 0
-		self.header_len = 0
+		self.cleanup()
 
 		try:
 			self.sock.connect((self.ip, self.port))
@@ -121,12 +124,7 @@ class ogClient:
 		if self.trailer and (len(self.data) >= self.content_len + self.header_len):
 			request.parser(self.data)
 			self.ogrest.process_request(request, self)
-
-			# Cleanup state information from request
-			self.data = ""
-			self.content_len = 0
-			self.header_len = 0
-			self.trailer = False
+			self.cleanup()
 
 	def disconnect(self):
 		self.state = State.FORCE_DISCONNECTED
