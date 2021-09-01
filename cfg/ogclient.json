@@ -15,5 +15,9 @@
 	"vnc": {
 		"activate": true,
 		"pass": "ogvnc"
-	}
+	},
+	"vfio": [
+		"audio",
+		"wifi"
+	]
 }
