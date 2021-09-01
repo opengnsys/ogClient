@@ -7,6 +7,7 @@
 # (at your option) any later version.
 
 from src.ogRest import ThreadState
+from src.virtual import poweroffd
 import socket
 import errno
 import select
@@ -223,15 +224,19 @@ class OgVirtualOperations:
         return installed_os
 
     def check_vm_state_loop(self, ogRest):
-        POLLING_WAIT_TIME = 12
+        # If we can't connect, wait until it's possible.
         while True:
-            time.sleep(POLLING_WAIT_TIME)
-            state = self.check_vm_state()
-            installed_os = self.get_installed_os()
-            if state == OgVM.State.STOPPED and \
-               ogRest.state == ThreadState.IDLE and \
-               len(installed_os) > 0:
-                self.poweroff_host()
+            try:
+                with socket.create_connection((poweroffd.QMP_DEFAULT_HOST,
+                                               poweroffd.QMP_DEFAULT_PORT)):
+                    break
+            except ConnectionRefusedError:
+                time.sleep(1)
+
+        qmpconn = poweroffd.init()
+        if poweroffd.run(qmpconn) < 0:
+            return
+        self.poweroff_host()
 
     def shellrun(self, request, ogRest):
         return
