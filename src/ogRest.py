@@ -264,6 +264,9 @@ class ogRest():
 			self.operations = OgVirtualOperations()
 			threading.Thread(target=self.operations.check_vm_state_loop,
 					 args=(self,)).start()
+		elif self.mode == 'linux':
+			from src.linux.ogOperations import OgLinuxOperations
+			self.operations = OgLinuxOperations()
 		else:
 			raise ValueError('Mode not supported.')
 
