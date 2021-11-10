@@ -100,6 +100,7 @@ class ogClient:
 
 		if len(data) == 0:
 			self.sock.close()
+			self.ogrest.kill_process()
 			self.connect()
 			return
 
