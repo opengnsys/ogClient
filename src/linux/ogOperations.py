@@ -7,10 +7,13 @@
 # (at your option) any later version.
 
 import os
-from pystray import Icon, Menu, MenuItem
+import subprocess
+from subprocess import CalledProcessError
 import multiprocessing as mp
 from multiprocessing import Process
+
 from PIL import Image, ImageDraw
+from pystray import Icon, Menu, MenuItem
 
 from src.ogRest import ThreadState
 
@@ -74,7 +77,21 @@ class OgLinuxOperations:
         os.system('systemctl reboot')
 
     def shellrun(self, request, ogRest):
-        raise NotImplementedError
+        cmd = request.getrun()
+        try:
+            result = subprocess.run(cmd,
+                                    shell=True,
+                                    stdin=subprocess.DEVNULL,
+                                    capture_output=True,
+                                    text=True,
+                                    check=True)
+        except CalledProcessError as error:
+            if error.stderr:
+                return error.stderr
+            if error.stdout:
+                return error.stdout
+            return "{Non zero exit code and empty output}"
+        return result.stdout
 
     def session(self, request, ogRest):
         raise NotImplementedError
