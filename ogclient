@@ -9,12 +9,18 @@
 # (at your option) any later version.
 
 import json
+import logging
 import subprocess
+try:
+	from signal import SIG_DFL, SIGPIPE
+except ImportError:
+	from signal import SIG_DFL
+
+
 from src.ogClient import *
-from signal import signal, SIGPIPE, SIG_DFL
+
 
 def main():
-	signal(SIGPIPE, SIG_DFL)
 	config_path = f'{ogClient.OG_PATH}ogclient/cfg/ogclient.json'
 	try:
 		with open(config_path, 'r') as f:
@@ -27,6 +33,8 @@ def main():
 	URL = CONFIG['opengnsys']['url']
 	if MODE == 'live':
 		proc = subprocess.Popen(["browser", "-qws", URL])
+	if MODE != 'windows':
+		signal.signal(SIGPIPE, SIG_DFL)
 
 	client = ogClient(config=CONFIG)
 	client.connect()
