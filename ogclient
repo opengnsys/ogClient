@@ -22,7 +22,7 @@ from src.log import configure_logging
 
 
 def main():
-	config_path = f'{ogClient.OG_PATH}ogclient/cfg/ogclient.json'
+	config_path = f'{ogClient.OG_PATH}cfg/ogclient.json'
 	try:
 		with open(config_path, 'r') as f:
 			CONFIG = json.load(f)
