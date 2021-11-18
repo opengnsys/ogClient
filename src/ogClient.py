@@ -30,7 +30,7 @@ class ogClient:
 		self.CONFIG = config
 
 		self.mode = self.CONFIG['opengnsys']['mode']
-		if self.mode not in {'virtual', 'live', 'linux'}:
+		if self.mode not in {'virtual', 'live', 'linux', 'windows'}:
 			raise ValueError('Mode not supported.')
 
 		if self.CONFIG['samba']['activate']:

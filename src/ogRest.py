@@ -15,7 +15,6 @@ import queue
 import sys
 import os
 import signal
-import syslog
 import logging
 from logging.handlers import SysLogHandler
 
@@ -269,6 +268,9 @@ class ogRest():
 		elif self.mode == 'linux':
 			from src.linux.ogOperations import OgLinuxOperations
 			self.operations = OgLinuxOperations()
+		elif self.mode == 'windows':
+			from src.windows.ogOperations import OgWindowsOperations
+			self.operations = OgWindowsOperations()
 		else:
 			raise ValueError('Mode not supported.')
 
