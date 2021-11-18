@@ -18,6 +18,7 @@ except ImportError:
 
 
 from src.ogClient import *
+from src.log import configure_logging
 
 
 def main():
@@ -35,6 +36,8 @@ def main():
 		proc = subprocess.Popen(["browser", "-qws", URL])
 	if MODE != 'windows':
 		signal.signal(SIGPIPE, SIG_DFL)
+
+	configure_logging(MODE)
 
 	client = ogClient(config=CONFIG)
 	client.connect()

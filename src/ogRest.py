@@ -16,8 +16,12 @@ import sys
 import os
 import signal
 import syslog
+import logging
+from logging.handlers import SysLogHandler
 
 from src.restRequest import *
+
+LOGGER = logging.getLogger()
 
 class ThreadState(Enum):
 	IDLE = 0
@@ -55,11 +59,9 @@ class restResponse():
 			return self.msg
 
 		if response in {ogResponses.OK, ogResponses.IN_PROGRESS}:
-			syslog.syslog(syslog.LOG_INFO,
-				      self.msg[:ogRest.LOG_LENGTH])
+			LOGGER.info(self.msg[:ogRest.LOG_LENGTH])
 		else:
-			syslog.syslog(syslog.LOG_ERR,
-				      self.msg[:ogRest.LOG_LENGTH])
+			LOGGER.warn(self.msg[:ogRest.LOG_LENGTH])
 
 		self.msg += '\r\n'
 
@@ -274,16 +276,15 @@ class ogRest():
 		method = request.get_method()
 		URI = request.get_uri()
 
-		syslog.syslog(syslog.LOG_DEBUG, f'{method}{URI[:ogRest.LOG_LENGTH]}')
+		LOGGER.debug('%s%s', method, URI[:ogRest.LOG_LENGTH])
 
 		if (not "stop" in URI and
 		    not "reboot" in URI and
 		    not "poweroff" in URI and
 		    not "probe" in URI):
 			if self.state == ThreadState.BUSY:
-				syslog.syslog(syslog.LOG_ERR,
-					      'Request has been received '
-					      'while ogClient is busy')
+				LOGGER.warn('Request has been received '
+					    'while ogClient is busy')
 				response = restResponse(ogResponses.SERVICE_UNAVAILABLE)
 				client.send(response.get())
 				return
@@ -300,9 +301,8 @@ class ogRest():
 			elif "refresh" in URI:
 				self.process_refresh(client)
 			else:
-				syslog.syslog(syslog.LOG_ERR,
-					      f'Unsupported request: '
-					      f'{method[:ogRest.LOG_LENGTH]}')
+				LOGGER.warn('Unsupported request: %s',
+					    {URI[:ogRest.LOG_LENGTH]})
 				response = restResponse(ogResponses.BAD_REQUEST)
 				client.send(response.get())
 				self.state = ThreadState.IDLE
@@ -326,9 +326,8 @@ class ogRest():
 			elif ("image/create" in URI):
 				self.process_imagecreate(client, request)
 			else:
-				syslog.syslog(syslog.LOG_ERR,
-					      f'Unsupported request: '
-					      f'{method[:ogRest.LOG_LENGTH]}')
+				LOGGER.warn('Unsupported request: %s',
+					    URI[:ogRest.LOG_LENGTH])
 				response = restResponse(ogResponses.BAD_REQUEST)
 				client.send(response.get())
 				self.state = ThreadState.IDLE
