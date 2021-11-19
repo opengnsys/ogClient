@@ -7,6 +7,7 @@
 # (at your option) any later version.
 
 import os
+import ctypes
 import subprocess
 from subprocess import CalledProcessError
 import multiprocessing as mp
@@ -16,6 +17,10 @@ from PIL import Image, ImageDraw
 from pystray import Icon, Menu, MenuItem
 
 from src.ogRest import ThreadState
+
+
+EWX_POWEROFF=0x00000008
+EWX_REBOOT=0x00000002
 
 
 def _create_default_image():
@@ -69,10 +74,14 @@ class OgWindowsOperations:
         raise NotImplementedError
 
     def poweroff(self):
+        user32 = ctypes.WinDLL('user32')
         systray_p.terminate()
+        user32.ExitWindowsEx(EWX_POWEROFF, 0x0)
 
     def reboot(self):
+        user32 = ctypes.WinDLL('user32')
         systray_p.terminate()
+        user32.ExitWindowsEx(EWX_REBOOT, 0x0)
 
     def shellrun(self, request, ogRest):
         cmd = request.getrun()
