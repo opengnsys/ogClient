@@ -11,7 +11,7 @@ import ctypes
 import subprocess
 from subprocess import CalledProcessError
 import multiprocessing as mp
-from multiprocessing import Process
+from multiprocessing import Process, freeze_support
 
 from PIL import Image, ImageDraw
 from pystray import Icon, Menu, MenuItem
@@ -67,6 +67,7 @@ systray_p = Process(target=create_systray)
 class OgWindowsOperations:
 
     def __init__(self):
+        freeze_support()
         mp.set_start_method('spawn')
         systray_p.start()
 
