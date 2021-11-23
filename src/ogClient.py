@@ -143,16 +143,20 @@ class ogClient:
 			if state == State.CONNECTING:
 				readset = [ sock ]
 				writeset = [ sock ]
+				exceptset = [ sock ]
 			elif state == State.FORCE_DISCONNECTED:
 				return 0
 			else:
 				readset = [ sock ]
 				writeset = [ ]
+				exceptset = [ ]
 
-			readable, writable, exception = select.select(readset, writeset, [ ])
+			readable, writable, exception = select.select(readset, writeset, exceptset)
 			if state == State.CONNECTING and sock in writable:
 				self.connect2()
 			elif state == State.RECEIVING and sock in readable:
 				self.receive()
+			elif state == State.CONNECTING and sock in exception:
+				self.connect2()
 			else:
 				print('wrong state, not ever happen!' + str(state))
