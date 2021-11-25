@@ -35,6 +35,10 @@ class ogClient:
 		self.mode = self.CONFIG['opengnsys']['mode']
 		if self.mode not in {'virtual', 'live', 'linux', 'windows'}:
 			raise ValueError('Mode not supported.')
+		if self.mode in {'linux', 'windows'}:
+			self.event_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+			self.event_sock.setblocking(0)
+			self.event_sock.bind(('127.0.0.1', 55885))
 
 		if self.CONFIG['samba']['activate']:
 			assert('user' in self.CONFIG['samba'])
@@ -47,8 +51,28 @@ class ogClient:
 	def get_socket(self):
 		return self.sock
 
+	def get_event_socket(self):
+		return self.event_sock
+
 	def get_state(self):
 		return self.state
+
+	def send_event_hint(self, message):
+		try:
+			event, action, user = message.split(" ")
+			logging.warning("%s, %s, %s", event, action, user)
+		except:
+			logging.warning("Error parsing session datagram")
+			return
+
+		if (event != "session" or
+		    action not in ['start', 'stop'] or
+		    not user):
+			logging.warning("Invalid value in session datagram: %s", message)
+
+		payload = jsonBody({'event': event, 'action': action, 'user': user})
+		response = restResponse(ogResponses.EARLY_HINTS, payload)
+		self.send(response.get())
 
 	def cleanup(self):
 		self.data = ""
@@ -138,6 +162,7 @@ class ogClient:
 	def run(self):
 		while 1:
 			sock = self.get_socket()
+			event_sock = self.get_event_socket()
 			state = self.get_state()
 
 			if state == State.CONNECTING:
@@ -147,7 +172,7 @@ class ogClient:
 			elif state == State.FORCE_DISCONNECTED:
 				return 0
 			else:
-				readset = [ sock ]
+				readset = [ sock, event_sock ] if event_sock else [ sock ]
 				writeset = [ ]
 				exceptset = [ ]
 
@@ -158,5 +183,8 @@ class ogClient:
 				self.receive()
 			elif state == State.CONNECTING and sock in exception:
 				self.connect2()
+			elif state == State.RECEIVING and event_sock in readable:
+				message = event_sock.recv(4096).decode('utf-8').rstrip()
+				self.send_event_hint(message)
 			else:
 				print('wrong state, not ever happen!' + str(state))

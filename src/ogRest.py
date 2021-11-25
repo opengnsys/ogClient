@@ -54,6 +54,8 @@ class restResponse():
 			self.msg = 'HTTP/1.0 401 Unauthorized'
 		elif response == ogResponses.SERVICE_UNAVAILABLE:
 			self.msg = 'HTTP/1.0 503 Service Unavailable'
+		elif response == ogResponses.EARLY_HINTS:
+			self.msg = 'HTTP/1.0 103 Early Hints'
 		else:
 			return self.msg
 
@@ -244,6 +246,7 @@ class ogResponses(Enum):
 	INTERNAL_ERR=3
 	UNAUTHORIZED=4
 	SERVICE_UNAVAILABLE=5
+	EARLY_HINTS=6
 
 class ogRest():
 	LOG_LENGTH = 32
