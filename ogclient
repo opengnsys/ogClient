@@ -10,6 +10,7 @@
 
 import json
 import logging
+import argparse
 import subprocess
 try:
 	from signal import SIG_DFL, SIGPIPE
@@ -21,7 +22,36 @@ from src.ogClient import *
 from src.log import configure_logging
 
 
+def send_event_dgram(msg, ip='127.0.0.1', port=55885):
+	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	sock.sendto(bytes(msg, "utf-8"), (ip, port))
+
+
+def create_parser():
+	events = ['login', 'logout']
+	parser = argparse.ArgumentParser()
+	parser.set_defaults(func=None)
+	subparsers = parser.add_subparsers()
+
+	parser_event = subparsers.add_parser('event')
+
+	subparsers_event = parser_event.add_subparsers()
+	parser_event_login = subparsers_event.add_parser('login')
+	parser_event_login.set_defaults(func=lambda x: send_event_dgram(f'session start {x.user}'))
+	parser_event_login.add_argument('user', type=str)
+	parser_event_logout = subparsers_event.add_parser('logout')
+	parser_event_logout.set_defaults(func=lambda x: send_event_dgram(f'session stop {x.user}'))
+	parser_event_logout.add_argument('user', type=str)
+
+	return parser
+
+
 def main():
+	parser = create_parser()
+	args = parser.parse_args(sys.argv[1:])
+	if args.func:
+		args.func(args)
+		return
 	config_path = f'{ogClient.OG_PATH}cfg/ogclient.json'
 	try:
 		with open(config_path, 'r') as f:
