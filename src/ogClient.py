@@ -11,7 +11,6 @@ import select
 import socket
 import time
 import email
-import platform
 from io import StringIO
 
 from src.restRequest import *
@@ -24,10 +23,7 @@ class State(Enum):
 	FORCE_DISCONNECTED = 2
 
 class ogClient:
-	if platform.system().lower() == 'linux':
-		OG_PATH = '/opt/opengnsys/ogclient/'
-	else:
-		OG_PATH = './'
+	OG_PATH = '/opt/opengnsys/'
 
 	def __init__(self, config):
 		self.CONFIG = config
