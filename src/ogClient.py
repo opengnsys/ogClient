@@ -48,7 +48,7 @@ class ogClient:
 		return self.sock
 
 	def get_event_socket(self):
-		return self.event_sock
+		return getattr(self, 'event_sock', None)
 
 	def get_state(self):
 		return self.state
