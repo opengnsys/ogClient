@@ -44,6 +44,9 @@ def create_parser():
 	parser_event_logout.set_defaults(func=lambda x: send_event_dgram(f'session stop {x.user}'))
 	parser_event_logout.add_argument('user', type=str)
 
+	parser.add_argument('-c', '--config', default="",
+			    help='ogClient JSON config file path')
+
 	return parser
 
 
@@ -54,7 +57,9 @@ def main():
 		args.func(args)
 		return
 
-	if platform.system().lower() == 'linux':
+	if args.config:
+		config_path = args.config
+	elif platform.system().lower() == 'linux':
 		config_path = f'{ogClient.OG_PATH}ogclient/cfg/ogclient.json'
 	else:
 		config_path = './cfg/ogclient.json'
