@@ -35,6 +35,8 @@ class ogClient:
 			self.event_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 			self.event_sock.setblocking(0)
 			self.event_sock.bind(('127.0.0.1', 55885))
+		else:
+			self.event_sock = None
 
 		if self.CONFIG['samba']['activate']:
 			assert('user' in self.CONFIG['samba'])
@@ -48,7 +50,7 @@ class ogClient:
 		return self.sock
 
 	def get_event_socket(self):
-		return getattr(self, 'event_sock', None)
+		return self.event_sock
 
 	def get_state(self):
 		return self.state
