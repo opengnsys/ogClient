@@ -7,12 +7,20 @@
 # (at your option) any later version.
 
 import os
-import json
 import subprocess
+
+import fdisk
+
 from src.ogClient import ogClient
 from src.ogRest import ThreadState
+from src.live.partcodes import GUID_MAP
 
 from src.utils.net import ethtool
+from src.utils.menu import generate_menu
+from src.utils.fs import mount_mkdir, umount, get_usedperc
+from src.utils.probe import os_probe
+from src.utils.disk import get_disks
+
 
 OG_SHELL = '/bin/bash'
 
@@ -27,6 +35,44 @@ class OgLiveOperations:
             proc = subprocess.Popen(["browser", "-qws", url])
         except:
             raise ValueError('Error: cannot restart browser')
+
+    def _refresh_payload_disk(self, cxt, part_setup, num_disk):
+        part_setup['disk'] = str(num_disk)
+        part_setup['disk_type'] = 'DISK'
+        part_setup['code'] = '2' if cxt.label.name == 'gpt' else '1'
+        part_setup['partition'] = '0'
+        part_setup['filesystem'] = ''
+        part_setup['os'] = ''
+        part_setup['size'] = str(cxt.nsectors * cxt.sector_size // 1024)
+        part_setup['used_size'] = '0'
+
+    def _refresh_payload_partition(self, cxt, pa, part_setup, num_part, disk):
+        parttype = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_TYPEID)
+        fstype = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_FSTYPE)
+        size = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_SIZE)
+        source = f'/dev/{disk}{num_part}'
+        target = f'/mnt/{disk}{num_part}/'
+        if cxt.label.name == 'gpt':
+            code = GUID_MAP.get(parttype, 0x0)
+        else:
+            code = int(parttype, base=16)
+
+        if mount_mkdir(source, target):
+            probe_result = os_probe(target)
+            part_setup['os'] = probe_result
+            part_setup['used_size'] = get_usedperc(target)
+            umount(target)
+        else:
+            part_setup['os'] = ''
+            part_setup['used_size'] = '0'
+
+
+        part_setup['disk_type'] = ''
+        part_setup['partition'] = str(num_part)
+        part_setup['filesystem'] = fstype.upper() if fstype else 'EMPTY'
+        # part_setup['code'] = hex(code).removeprefix('0x')
+        part_setup['code'] = hex(code)[2:]
+        part_setup['size'] = str(int(size) // 1024)
 
     def parseGetConf(self, out):
         parsed = {'serial_number': '',
@@ -267,19 +313,32 @@ class OgLiveOperations:
     def refresh(self, ogRest):
         self._restartBrowser(self._url_log)
 
-        try:
-            cmd = f'{ogClient.OG_PATH}interfaceAdm/getConfiguration'
-            ogRest.proc = subprocess.Popen([cmd],
-                               stdout=subprocess.PIPE,
-                               shell=True,
-                               executable=OG_SHELL)
-            (output, error) = ogRest.proc.communicate()
-        except:
-            raise ValueError('Error: Incorrect command value')
+        disks = get_disks()
+        parsed = { 'serial_number': '',
+                'disk_setup': [],
+                'partition_setup': []
+        }
 
+        for num_disk, disk in enumerate(get_disks(), start=1):
+            print(disk)
+            part_setup = {}
+            try:
+                cxt = fdisk.Context(device=f'/dev/{disk}')
+            except:
+                continue
+
+            self._refresh_payload_disk(cxt, part_setup, num_disk)
+            parsed['disk_setup'].append(part_setup)
+
+            for num_part, pa in enumerate(cxt.parts, start=1):
+                part_setup = part_setup.copy()
+                self._refresh_payload_partition(cxt, pa, part_setup, num_part, disk)
+                parsed['partition_setup'].append(part_setup)
+
+        generate_menu(parsed['partition_setup'])
         self._restartBrowser(self._url)
 
-        return self.parseGetConf(output.decode('utf-8'))
+        return parsed
 
     def probe(self, ogRest):
 
