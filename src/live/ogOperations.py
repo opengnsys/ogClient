@@ -9,9 +9,10 @@
 import os
 import json
 import subprocess
-import fcntl, socket, array, struct
 from src.ogClient import ogClient
 from src.ogRest import ThreadState
+
+from src.utils.net import ethtool
 
 OG_SHELL = '/bin/bash'
 
@@ -281,27 +282,8 @@ class OgLiveOperations:
         return self.parseGetConf(output.decode('utf-8'))
 
     def probe(self, ogRest):
-        def ethtool(interface):
-            try:
-                ETHTOOL_GSET = 0x00000001
-                SIOCETHTOOL = 0x8946
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sockfd = sock.fileno()
-                ecmd = array.array(
-                        "B", struct.pack("I39s", ETHTOOL_GSET, b"\x00" * 39)
-                       )
-                interface = interface.encode("utf-8")
-                ifreq = struct.pack("16sP", interface, ecmd.buffer_info()[0])
-                fcntl.ioctl(sockfd, SIOCETHTOOL, ifreq)
-                res = ecmd.tobytes()
-                speed = struct.unpack("12xH29x", res)[0]
-            except IOError:
-                speed = 0
-            finally:
-                sock.close()
-            return speed
 
-        interface = os.environ['DEVICE']
+        interface = os.getenv('DEVICE')
         speed = ethtool(interface)
 
         return {'status': 'OPG' if ogRest.state != ThreadState.BUSY else 'BSY',
