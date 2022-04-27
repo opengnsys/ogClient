@@ -52,8 +52,8 @@ def getwindowsversion(winreghives):
             'microsoft\windows nt\currentversion',
             'ReleaseId'], stdout=PIPE)
 
-        proc_prodname = proc_releaseid.stdout.replace('\n', '')
-        releaseid = proc_releaseid.stdout.replace('\n', '')
+        prodname = proc_prodname.stdout.decode().replace('\n', '')
+        releaseid = proc_releaseid.stdout.decode().replace('\n', '')
 
         if proc_prodname.returncode == 0 and proc_releaseid.returncode == 0:
             return f'{prodname} {releaseid}'
