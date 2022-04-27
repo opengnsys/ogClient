@@ -46,12 +46,13 @@ class OgLiveOperations:
         part_setup['size'] = str(cxt.nsectors * cxt.sector_size // 1024)
         part_setup['used_size'] = '0'
 
-    def _refresh_payload_partition(self, cxt, pa, part_setup, num_part, disk):
+    def _refresh_payload_partition(self, cxt, pa, part_setup, disk):
         parttype = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_TYPEID)
         fstype = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_FSTYPE)
         size = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_SIZE)
-        source = f'/dev/{disk}{num_part}'
-        target = f'/mnt/{disk}{num_part}/'
+        partnum = pa.partno + 1
+        source = f'/dev/{disk}{partnum}'
+        target = f'/mnt/{disk}{partnum}/'
         if cxt.label.name == 'gpt':
             code = GUID_MAP.get(parttype, 0x0)
         else:
@@ -68,7 +69,7 @@ class OgLiveOperations:
 
 
         part_setup['disk_type'] = ''
-        part_setup['partition'] = str(num_part)
+        part_setup['partition'] = str(partnum)
         part_setup['filesystem'] = fstype.upper() if fstype else 'EMPTY'
         # part_setup['code'] = hex(code).removeprefix('0x')
         part_setup['code'] = hex(code)[2:]
@@ -330,9 +331,9 @@ class OgLiveOperations:
             self._refresh_payload_disk(cxt, part_setup, num_disk)
             parsed['disk_setup'].append(part_setup)
 
-            for num_part, pa in enumerate(cxt.parts, start=1):
+            for pa in cxt.partitions:
                 part_setup = part_setup.copy()
-                self._refresh_payload_partition(cxt, pa, part_setup, num_part, disk)
+                self._refresh_payload_partition(cxt, pa, part_setup, disk)
                 parsed['partition_setup'].append(part_setup)
 
         generate_menu(parsed['partition_setup'])
