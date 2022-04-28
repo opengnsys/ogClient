@@ -81,7 +81,7 @@ def os_probe(mountpoint):
 
     Returns a string depending on the OS it detects.
     """
-    winreghives = f'{mountpoint}Windows/System32/config'
+    winreghives = f'{mountpoint}/Windows/System32/config'
     osrelease = f'{mountpoint}/etc/os-release'
 
     if os.path.exists(osrelease):
