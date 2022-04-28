@@ -62,6 +62,15 @@ def getwindowsversion(winreghives):
     return 'Microsoft Windows'
 
 
+def cache_probe():
+    """
+    Runs 'blkid -L CACHE' and returns stripped stdout
+    """
+    proc_blkid = subprocess.run(['blkid', '-L', 'CACHE'],
+                                stdout=subprocess.PIPE)
+    stdout = proc_blkid.stdout.decode().strip()
+    return stdout
+
 def os_probe(mountpoint):
     """
     Probes mountpoint for typical OS dependant files.

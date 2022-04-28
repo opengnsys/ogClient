@@ -18,7 +18,7 @@ from src.live.partcodes import GUID_MAP
 from src.utils.net import ethtool
 from src.utils.menu import generate_menu
 from src.utils.fs import mount_mkdir, umount, get_usedperc
-from src.utils.probe import os_probe
+from src.utils.probe import os_probe, cache_probe
 from src.utils.disk import get_disks
 
 
@@ -49,10 +49,12 @@ class OgLiveOperations:
     def _refresh_payload_partition(self, cxt, pa, part_setup, disk):
         parttype = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_TYPEID)
         fstype = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_FSTYPE)
+        padev = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_DEVICE)
         size = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_SIZE)
         partnum = pa.partno + 1
-        source = f'/dev/{disk}{partnum}'
-        target = f'/mnt/{disk}{partnum}/'
+        source = padev
+        target = padev.replace('dev', 'mnt')
+
         if cxt.label.name == 'gpt':
             code = GUID_MAP.get(parttype, 0x0)
         else:
@@ -74,6 +76,13 @@ class OgLiveOperations:
         # part_setup['code'] = hex(code).removeprefix('0x')
         part_setup['code'] = hex(code)[2:]
         part_setup['size'] = str(int(size) // 1024)
+
+    def _refresh_part_setup_cache(self, cxt, pa, part_setup, cache):
+        padev = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_DEVICE)
+        if padev == cache:
+            part_setup['filesystem'] = 'CACHE'
+            part_setup['code'] = 'ca'
+
 
     def parseGetConf(self, out):
         parsed = {'serial_number': '',
@@ -314,6 +323,7 @@ class OgLiveOperations:
     def refresh(self, ogRest):
         self._restartBrowser(self._url_log)
 
+        cache = cache_probe()
         disks = get_disks()
         parsed = { 'serial_number': '',
                 'disk_setup': [],
@@ -334,6 +344,7 @@ class OgLiveOperations:
             for pa in cxt.partitions:
                 part_setup = part_setup.copy()
                 self._refresh_payload_partition(cxt, pa, part_setup, disk)
+                self._refresh_part_setup_cache(cxt, pa, part_setup, cache)
                 parsed['partition_setup'].append(part_setup)
 
         generate_menu(parsed['partition_setup'])
