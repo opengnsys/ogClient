@@ -325,9 +325,12 @@ class OgLiveOperations:
 
         cache = cache_probe()
         disks = get_disks()
+        interface = os.getenv('DEVICE')
+        link = ethtool(interface)
         parsed = { 'serial_number': '',
                 'disk_setup': [],
-                'partition_setup': []
+                'partition_setup': [],
+                'link': link
         }
 
         for num_disk, disk in enumerate(get_disks(), start=1):
