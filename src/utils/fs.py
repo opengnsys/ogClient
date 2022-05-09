@@ -27,11 +27,17 @@ def find_mountpoint(path):
 def mount_mkdir(source, target):
     """
     Mounts and creates the mountpoint directory if it's not present.
+
+    Return True if mount is sucessful or if target is already a mountpoint.
     """
     if not os.path.exists(target):
         os.mkdir(target)
+
     if not os.path.ismount(target):
         return mount(source, target)
+    else:
+        return True
+
     return False
 
 
