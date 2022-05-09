@@ -14,6 +14,16 @@ from subprocess import DEVNULL
 import psutil
 
 
+def find_mountpoint(path):
+    """
+    Returns mountpoint of a given path
+    """
+    path = os.path.abspath(path)
+    while not os.path.ismount(path):
+        path = os.path.dirname(path)
+    return path
+
+
 def mount_mkdir(source, target):
     """
     Mounts and creates the mountpoint directory if it's not present.
