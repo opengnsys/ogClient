@@ -20,6 +20,7 @@ from src.utils.menu import generate_menu
 from src.utils.fs import mount_mkdir, umount, get_usedperc
 from src.utils.probe import os_probe, cache_probe
 from src.utils.disk import get_disks
+from src.utils.cache import generate_cache_txt
 
 
 OG_SHELL = '/bin/bash'
@@ -351,6 +352,7 @@ class OgLiveOperations:
                 parsed['partition_setup'].append(part_setup)
 
         generate_menu(parsed['partition_setup'])
+        generate_cache_txt()
         self._restartBrowser(self._url)
 
         return parsed
