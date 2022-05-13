@@ -78,6 +78,9 @@ class OgLiveOperations:
         part_setup['code'] = hex(code)[2:]
         part_setup['size'] = str(int(size) // 1024)
 
+        if (part_setup['filesystem'] == 'VFAT'):
+            part_setup['filesystem'] = 'FAT32'
+
     def _refresh_part_setup_cache(self, cxt, pa, part_setup, cache):
         padev = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_DEVICE)
         if padev == cache:
