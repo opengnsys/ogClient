@@ -145,9 +145,7 @@ class OgLiveOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
-        cmd_get_conf = f'{ogClient.OG_PATH}interfaceAdm/getConfiguration'
-        result = subprocess.check_output([cmd_get_conf], shell=True)
-        self._restartBrowser(self._url)
+        self.refresh(ogRest)
 
         return output.decode('utf-8')
 
@@ -235,11 +233,9 @@ class OgLiveOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
-        cmd_get_conf = f'{ogClient.OG_PATH}interfaceAdm/getConfiguration'
-        result = subprocess.check_output([cmd_get_conf], shell=True)
-        self._restartBrowser(self._url)
+        result = self.refresh(ogRest)
 
-        return self.parseGetConf(result.decode('utf-8'))
+        return result
 
     def image_restore(self, request, ogRest):
         disk = request.getDisk()
@@ -265,9 +261,7 @@ class OgLiveOperations:
         except:
             raise ValueError('Error: Incorrect command value')
 
-        cmd_get_conf = f'{ogClient.OG_PATH}interfaceAdm/getConfiguration'
-        result = subprocess.check_output([cmd_get_conf], shell=True)
-        self._restartBrowser(self._url)
+        self.refresh(ogRest)
 
         return output.decode('utf-8')
 
