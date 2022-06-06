@@ -46,6 +46,9 @@ def create_parser():
 
 	parser.add_argument('-c', '--config', default="",
 			    help='ogClient JSON config file path')
+	parser.add_argument('--debug', default=False,
+			    action='store_true',
+			    help='enables debug log level')
 
 	return parser
 
@@ -73,12 +76,17 @@ def main():
 
 	MODE = CONFIG['opengnsys']['mode']
 	URL = CONFIG['opengnsys']['url']
+	LOGLEVEL = CONFIG['opengnsys']['log']
+
 	if MODE == 'live':
 		proc = subprocess.Popen(["browser", "-qws", URL])
 	if MODE != 'windows':
 		signal.signal(SIGPIPE, SIG_DFL)
 
-	configure_logging(MODE)
+	configure_logging(MODE, LOGLEVEL)
+
+	if args.debug:
+		logging.getLogger().setLevel('DEBUG')
 
 	client = ogClient(config=CONFIG)
 	client.connect()

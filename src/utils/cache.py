@@ -6,6 +6,7 @@
 # Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 
+import logging
 import os
 
 from src.utils.fs import mount_mkdir, umount
@@ -45,7 +46,7 @@ def write_cache_txt(content):
     """
     client_ip = getifaddr(os.getenv('DEVICE'))
     with open(OGCLIENT_LOG_CACHE.format(ip=client_ip), 'w') as f:
-        print("About to write")
+        logging.debug('Writing cache contents to %s.cache.txt', client_ip)
         f.write(content)
 
 def generate_cache_txt():

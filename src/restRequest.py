@@ -7,8 +7,10 @@
 # (at your option) any later version.
 
 import email
-from io import StringIO
 import json
+import logging
+
+from io import StringIO
 
 class restRequest:
 	def __init__(self):
@@ -57,7 +59,7 @@ class restRequest:
 			try:
 				json_param = json.loads(body)
 			except ValueError as e:
-				print ("Error: Json message incomplete")
+				logging.error("JSON message incomplete")
 				return
 
 			if "run" in json_param:

@@ -60,7 +60,7 @@ class restResponse():
 			return self.msg
 
 		if response in {ogResponses.OK, ogResponses.IN_PROGRESS}:
-			LOGGER.info(self.msg[:ogRest.LOG_LENGTH])
+			LOGGER.debug(self.msg[:ogRest.LOG_LENGTH])
 		else:
 			LOGGER.warn(self.msg[:ogRest.LOG_LENGTH])
 
@@ -281,7 +281,7 @@ class ogRest():
 		method = request.get_method()
 		URI = request.get_uri()
 
-		LOGGER.debug('%s%s', method, URI[:ogRest.LOG_LENGTH])
+		LOGGER.debug('Incoming request: %s%s', method, URI[:ogRest.LOG_LENGTH])
 
 		if (not "stop" in URI and
 		    not "reboot" in URI and

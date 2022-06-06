@@ -6,6 +6,7 @@
 # Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 
+import logging
 import os
 import subprocess
 
@@ -115,6 +116,7 @@ class OgLiveOperations:
         return parsed
 
     def poweroff(self):
+        logging.info('Powering off client')
         if os.path.exists('/scripts/oginit'):
             cmd = f'source {ogClient.OG_PATH}etc/preinit/loadenviron.sh; ' \
                   f'{ogClient.OG_PATH}scripts/poweroff'
@@ -123,6 +125,7 @@ class OgLiveOperations:
             subprocess.call(['/sbin/poweroff'])
 
     def reboot(self):
+        logging.info('Rebooting client')
         if os.path.exists('/scripts/oginit'):
             cmd = f'source {ogClient.OG_PATH}etc/preinit/loadenviron.sh; ' \
                   f'{ogClient.OG_PATH}scripts/reboot'
@@ -143,7 +146,13 @@ class OgLiveOperations:
                                executable=OG_SHELL)
             (output, error) = ogRest.proc.communicate()
         except:
+            logging.error('Exception when running "shell run" subprocess')
             raise ValueError('Error: Incorrect command value')
+
+        if ogRest.proc.returncode != 0:
+            logging.warn('Non zero exit code when running: %s', ' '.join(cmds))
+        else:
+            logging.info('Shell run command OK')
 
         self.refresh(ogRest)
 
@@ -161,8 +170,10 @@ class OgLiveOperations:
                                executable=OG_SHELL)
             (output, error) = ogRest.proc.communicate()
         except:
+            logging.error('Exception when running session subprocess')
             raise ValueError('Error: Incorrect command value')
 
+        logging.info('Starting OS at disk %s partition %s', disk, partition)
         return output.decode('utf-8')
 
     def software(self, request, path, ogRest):
@@ -181,6 +192,7 @@ class OgLiveOperations:
                                executable=OG_SHELL)
             (output, error) = ogRest.proc.communicate()
         except:
+            logging.error('Exception when running software inventory subprocess')
             raise ValueError('Error: Incorrect command value')
 
         self._restartBrowser(self._url)
@@ -188,6 +200,8 @@ class OgLiveOperations:
         software = ''
         with open(path, 'r') as f:
             software = f.read()
+
+        logging.info('Software inventory command OK')
         return software
 
     def hardware(self, path, ogRest):
@@ -201,10 +215,12 @@ class OgLiveOperations:
                                executable=OG_SHELL)
             (output, error) = ogRest.proc.communicate()
         except:
+            logging.error('Exception when running hardware inventory subprocess')
             raise ValueError('Error: Incorrect command value')
 
         self._restartBrowser(self._url)
 
+        logging.info('Hardware inventory command OK')
         return output.decode('utf-8')
 
     def setup(self, request, ogRest):
@@ -231,8 +247,10 @@ class OgLiveOperations:
                                executable=OG_SHELL)
             (output, error) = ogRest.proc.communicate()
         except:
+            logging.error('Exception when running setup subprocess')
             raise ValueError('Error: Incorrect command value')
 
+        logging.info('Setup command OK')
         result = self.refresh(ogRest)
 
         return result
@@ -259,10 +277,12 @@ class OgLiveOperations:
             if (ogRest.proc.returncode):
                 raise Exception
         except:
+            logging.error('Exception when running image restore subprocess')
             raise ValueError('Error: Incorrect command value')
 
         self.refresh(ogRest)
 
+        logging.info('Image restore command OK')
         return output.decode('utf-8')
 
     def image_create(self, path, request, ogRest):
@@ -284,6 +304,7 @@ class OgLiveOperations:
                                executable=OG_SHELL)
             (output, error) = ogRest.proc.communicate()
         except:
+            logging.error('Exception when running software inventory subprocess')
             raise ValueError('Error: Incorrect command value')
 
         if ogRest.terminated:
@@ -296,9 +317,11 @@ class OgLiveOperations:
                                executable=OG_SHELL)
             ogRest.proc.communicate()
         except:
+            logging.error('Exception when running "image create" subprocess')
             raise ValueError('Error: Incorrect command value')
 
         if ogRest.proc.returncode != 0:
+            logging.warn('Image creation failed')
             raise ValueError('Error: Image creation failed')
 
         with open('/tmp/image.info') as file_info:
@@ -316,6 +339,7 @@ class OgLiveOperations:
 
         self._restartBrowser(self._url)
 
+        logging.info('Image creation command OK')
         return image_info
 
     def refresh(self, ogRest):
@@ -332,7 +356,7 @@ class OgLiveOperations:
         }
 
         for num_disk, disk in enumerate(get_disks(), start=1):
-            print(disk)
+            logging.debug('refresh: processing %s', disk)
             part_setup = {}
             try:
                 cxt = fdisk.Context(device=f'/dev/{disk}')
@@ -352,6 +376,7 @@ class OgLiveOperations:
         generate_cache_txt()
         self._restartBrowser(self._url)
 
+        logging.info('Sending response to refresh request')
         return parsed
 
     def probe(self, ogRest):

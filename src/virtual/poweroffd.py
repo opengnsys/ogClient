@@ -6,6 +6,7 @@
 # Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 
+import logging
 
 from src.virtual.qmp import QEMUMonitorProtocol
 from src.virtual.qmp import QMPCapabilitiesError, QMPConnectError
@@ -26,10 +27,10 @@ def init(host=QMP_DEFAULT_HOST, port=QMP_DEFAULT_PORT):
     try:
         qmpconn.connect()
     except ConnectionRefusedError:
-        print("Critical err: Connection refused")
+        logging.critical('poweroffd: Connection refused')
         return None
     except QMPCapabilitiesError as e:
-        print("Error negotiating capabilities")
+        logging.critical('poweroffd: Error negotiating capabilities')
         return None
     return qmpconn
 
@@ -41,11 +42,11 @@ def run(qmpconn):
         try:
             qmp_ev = qmpconn.pull_event(wait=True)
         except QMPConnectError as e:
-            print("Error trying to pull an event")
+            logging.critical('Error trying to pull an event')
             ret = -1
             break
         if is_shutdown_event(qmp_ev):
-            print("Detected guest shutdown, let's go")
+            logging.info('Detected guest shutdown, powering off')
             ret = 0
             break
 

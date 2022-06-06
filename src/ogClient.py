@@ -11,6 +11,7 @@ import select
 import socket
 import time
 import email
+import logging
 from io import StringIO
 
 from src.restRequest import *
@@ -30,6 +31,7 @@ class ogClient:
 
 		self.mode = self.CONFIG['opengnsys']['mode']
 		if self.mode not in {'virtual', 'live', 'linux', 'windows'}:
+			logging.critical('Invalid ogClient mode')
 			raise ValueError('Mode not supported.')
 		if self.mode in {'linux', 'windows'}:
 			self.event_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -58,19 +60,20 @@ class ogClient:
 	def send_event_hint(self, message):
 		try:
 			event, action, user = message.split(" ")
-			logging.warning("%s, %s, %s", event, action, user)
+			logging.debug('Sending event: %s, %s, %s', event, action, user)
 		except:
-			logging.warning("Error parsing session datagram")
+			logging.warning('Error parsing session datagram')
 			return
 
 		if (event != "session" or
 		    action not in ['start', 'stop'] or
 		    not user):
-			logging.warning("Invalid value in session datagram: %s", message)
+			logging.warning('Invalid value in session datagram: %s', message)
 
 		payload = jsonBody({'event': event, 'action': action, 'user': user})
 		response = restResponse(ogResponses.EARLY_HINTS, payload)
 		self.send(response.get())
+		logging.debug('Sending event OK')
 
 	def cleanup(self):
 		self.data = ""
@@ -79,7 +82,7 @@ class ogClient:
 		self.trailer = False
 
 	def connect(self):
-		print('connecting...')
+		logging.debug('Connecting...')
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sock.setblocking(0)
 		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
@@ -107,11 +110,11 @@ class ogClient:
 			self.sock.connect((self.ip, self.port))
 		except socket.error as err:
 			if err.errno == errno.EISCONN:
-				print('connected')
+				logging.debug('Connected')
 				self.state = State.RECEIVING
 			else:
 				time.sleep(1)
-				print('connection refused, retrying...')
+				logging.warning('Connection refused, retrying...')
 				self.state = State.CONNECTING
 				self.sock.close()
 				self.connect()
@@ -121,7 +124,7 @@ class ogClient:
 			data = self.sock.recv(1024).decode('utf-8')
 		except socket.error as err:
 			data = ''
-			print('failed to received ' + str(err))
+			logging.warning('Receive failed: %s', str(err))
 
 		if len(data) == 0:
 			self.sock.close()
@@ -185,4 +188,4 @@ class ogClient:
 				message = event_sock.recv(4096).decode('utf-8').rstrip()
 				self.send_event_hint(message)
 			else:
-				print('wrong state, not ever happen!' + str(state))
+				logging.critical('Invalid state: %s', str(state))
