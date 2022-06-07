@@ -332,7 +332,7 @@ class OgLiveOperations:
             logging.debug('refresh: processing %s', disk)
             part_setup = {}
             try:
-                cxt = fdisk.Context(device=f'/dev/{disk}')
+                cxt = fdisk.Context(device=f'/dev/{disk}', details=True)
             except:
                 continue
 
