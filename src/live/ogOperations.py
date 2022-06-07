@@ -88,33 +88,6 @@ class OgLiveOperations:
             part_setup['filesystem'] = 'CACHE'
             part_setup['code'] = 'ca'
 
-
-    def parseGetConf(self, out):
-        parsed = {'serial_number': '',
-              'disk_setup': list(),
-              'partition_setup': list()}
-        configs = out.split('\n')
-        for line in configs[:-1]:
-            if 'ser=' in line:
-                parsed['serial_number'] = line.partition('ser=')[2]
-            else:
-                part_setup = {}
-                params = dict(param.split('=') for param in line.split('\t'))
-                # Parse partition configuration.
-                part_setup['disk'] = params['disk']
-                part_setup['disk_type'] = params.get('dtype', '')
-                part_setup['partition'] = params['par']
-                part_setup['code'] = params['cpt']
-                part_setup['filesystem'] = params['fsi']
-                part_setup['os'] = params['soi']
-                part_setup['size'] = params['tam']
-                part_setup['used_size'] = params['uso']
-                if part_setup['partition'] == '0':
-                    parsed['disk_setup'].append(part_setup)
-                else:
-                    parsed['partition_setup'].append(part_setup)
-        return parsed
-
     def poweroff(self):
         logging.info('Powering off client')
         if os.path.exists('/scripts/oginit'):
