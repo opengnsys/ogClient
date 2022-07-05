@@ -6,9 +6,13 @@
 # Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 
+import hashlib
 import logging
 import os
 import subprocess
+import shlex
+
+from subprocess import Popen, PIPE
 
 import fdisk
 
@@ -16,9 +20,10 @@ from src.ogClient import ogClient
 from src.ogRest import ThreadState
 from src.live.partcodes import GUID_MAP
 
+from src.utils.legacy import *
 from src.utils.net import ethtool
 from src.utils.menu import generate_menu
-from src.utils.fs import mount_mkdir, umount, get_usedperc
+from src.utils.fs import *
 from src.utils.probe import os_probe, cache_probe
 from src.utils.disk import get_disks
 from src.utils.cache import generate_cache_txt
@@ -30,6 +35,8 @@ class OgLiveOperations:
     def __init__(self, config):
         self._url = config['opengnsys']['url']
         self._url_log = config['opengnsys']['url_log']
+        self._smb_user = config['samba']['user']
+        self._smb_pass = config['samba']['pass']
 
     def _restartBrowser(self, url):
         try:
@@ -90,6 +97,25 @@ class OgLiveOperations:
         if padev == cache:
             part_setup['filesystem'] = 'CACHE'
             part_setup['code'] = 'ca'
+
+    def _compute_md5(self, path, bs=2**20):
+        m = hashlib.md5()
+        with open(path, 'rb') as f:
+            while True:
+                buf = f.read(bs)
+                if not buf:
+                    break
+                m.update(buf)
+        return m.hexdigest()
+
+    def _write_md5_file(self, path):
+        if not os.path.exists(path):
+            logging.error('Invalid path in _write_md5_file')
+            raise ValueError('Invalid image path when computing md5 checksum')
+        filename = path + ".full.sum"
+        dig = self._compute_md5(path)
+        with open(filename, 'w') as f:
+            f.write(dig)
 
     def poweroff(self):
         logging.info('Powering off client')
@@ -262,16 +288,19 @@ class OgLiveOperations:
         return output.decode('utf-8')
 
     def image_create(self, path, request, ogRest):
-        disk = request.getDisk()
-        partition = request.getPartition()
+        disk = int(request.getDisk())
+        partition = int(request.getPartition())
         name = request.getName()
         repo = request.getRepo()
         cmd_software = f'{ogClient.OG_PATH}interfaceAdm/InventarioSoftware {disk} ' \
                    f'{partition} {path}'
-        cmd_create_image = f'{ogClient.OG_PATH}interfaceAdm/CrearImagen {disk} ' \
-                   f'{partition} {name} {repo}'
+        image_path = f'/opt/opengnsys/images/{name}.img'
 
         self._restartBrowser(self._url_log)
+
+        if ogChangeRepo(repo).returncode != 0:
+            logging.error('ogChangeRepo could not change repository to %s', repo)
+            raise ValueError(f'Error: Cannot change repository to {repo}')
 
         try:
             ogRest.proc = subprocess.Popen([cmd_software],
@@ -287,31 +316,57 @@ class OgLiveOperations:
             return
 
         try:
-            ogRest.proc = subprocess.Popen([cmd_create_image],
-                               stdout=subprocess.PIPE,
-                               shell=True,
-                               executable=OG_SHELL)
-            ogRest.proc.communicate()
+            diskname = get_disks()[disk-1]
+            cxt = fdisk.Context(f'/dev/{diskname}', details=True)
+            pa = None
+
+            for i, p in enumerate(cxt.partitions):
+                if (p.partno + 1) == partition:
+                    pa = cxt.partitions[i]
+
+            if pa is None:
+                logging.error('Target partition not found')
+                raise ValueError('Target partition number not found')
+
+            padev = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_DEVICE)
+            fstype = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_FSTYPE)
+            if not fstype:
+                    logging.error('No filesystem detected. Aborting image creation.')
+                    raise ValueError('Target partition has no filesystem present')
+
+            cambiar_acceso(user=self._smb_user, pwd=self._smb_pass)
+            ogReduceFs(disk, partition)
+
+            cmd1 = shlex.split(f'partclone.{fstype} -I -C --clone -s {padev} -O -')
+            cmd2 = shlex.split(f'lzop -1 -fo {image_path}')
+
+            logfile = open('/tmp/command.log', 'wb', 0)
+
+            p1 = Popen(cmd1, stdout=PIPE, stderr=logfile)
+            p2 = Popen(cmd2, stdin=p1.stdout)
+            p1.stdout.close()
+
+            try:
+                    retdata = p2.communicate()
+            except OSError as e:
+                    logging.error('Unexpected error when running partclone and lzop commands')
+            finally:
+                    logfile.close()
+                    p2.terminate()
+                    p1.poll()
+
+            logging.info(f'partclone process exited with code {p1.returncode}')
+            logging.info(f'lzop process exited with code {p2.returncode}')
+
+            if ogExtendFs(disk, partition) != 0:
+                logging.warn('Error extending filesystem after image creation')
+
+            image_info = ogGetImageInfo(image_path)
         except:
             logging.error('Exception when running "image create" subprocess')
             raise ValueError('Error: Incorrect command value')
 
-        if ogRest.proc.returncode != 0:
-            logging.warn('Image creation failed')
-            raise ValueError('Error: Image creation failed')
-
-        with open('/tmp/image.info') as file_info:
-            line = file_info.readline().rstrip()
-
-        image_info = {}
-
-        (image_info['clonator'],
-         image_info['compressor'],
-         image_info['filesystem'],
-         image_info['datasize'],
-         image_info['clientname']) = line.split(':', 5)
-
-        os.remove('/tmp/image.info')
+        self._write_md5_file(f'/opt/opengnsys/images/{name}.img')
 
         self._restartBrowser(self._url)
 

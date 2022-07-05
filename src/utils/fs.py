@@ -6,10 +6,11 @@
 # Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 
+import logging
 import os
 import subprocess
 
-from subprocess import DEVNULL
+from subprocess import DEVNULL, PIPE
 
 import psutil
 
@@ -74,3 +75,28 @@ def get_usedperc(mountpoint):
     except FileNotFoundError:
         return '0'
     return str(perc)
+
+
+def ogReduceFs(disk, part):
+    """
+    Bash function 'ogReduceFs' wrapper
+    """
+    proc = subprocess.run(f'ogReduceFs {disk} {part}',
+                          shell=True, stdout=PIPE)
+
+    if proc.returncode == 0:
+        subprocess.run(f'ogUnmount {disk} {part}',
+                       shell=True, stdout=PIPE)
+        return proc.stdout.decode().replace('\n', '')
+
+    logging.warn(f'ogReduceFS exited with code {proc.returncode}')
+    return None
+
+
+def ogExtendFs(disk, part):
+    """
+    Bash function 'ogExtendFs' wrapper
+    """
+    proc = subprocess.run(f'ogExtendFs {disk} {part}',
+                          shell=True)
+    return proc.returncode
