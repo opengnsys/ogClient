@@ -41,12 +41,15 @@ class OgLiveOperations:
     def _refresh_payload_disk(self, cxt, part_setup, num_disk):
         part_setup['disk'] = str(num_disk)
         part_setup['disk_type'] = 'DISK'
-        part_setup['code'] = '2' if cxt.label.name == 'gpt' else '1'
         part_setup['partition'] = '0'
         part_setup['filesystem'] = ''
         part_setup['os'] = ''
         part_setup['size'] = str(cxt.nsectors * cxt.sector_size // 1024)
         part_setup['used_size'] = '0'
+        if not cxt.label:
+            part_setup['code'] = '0'
+        else:
+            part_setup['code'] = '2' if cxt.label.name == 'gpt' else '1'
 
     def _refresh_payload_partition(self, cxt, pa, part_setup, disk):
         parttype = cxt.partition_to_string(pa, fdisk.FDISK_FIELD_TYPEID)
