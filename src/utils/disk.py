@@ -8,6 +8,9 @@
 
 import os
 
+import fdisk
+
+
 def get_disks():
     """
     Walks /sys/block/ and returns files starting with 'sd',
@@ -17,3 +20,17 @@ def get_disks():
                     if dev.startswith('sd')
                     or dev.startswith('nvme')
                     or dev.startswith('vd')])
+
+
+def get_partition_device(disknum, partnum):
+    """
+    Returns the device path, given a disk and partition number
+    """
+    disk = get_disks()[disknum-1]
+    cxt = fdisk.Context(f'/dev/{disk}')
+
+    for pa in cxt.partitions:
+        if pa.partno == partnum - 1:
+            return cxt.partition_to_string(pa, fdisk.FDISK_FIELD_DEVICE)
+
+    raise ValueError('No such partition')
