@@ -71,16 +71,13 @@ def tip_client_get(tip_addr, image_name):
 
     try:
         proc = subprocess.Popen(shlex.split(cmd),
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
+                                stdout=logfile,
                                 cwd='/opt/opengnsys/cache/opt/opengnsys/images/')
-        out, err = proc.communicate()
+        proc.communicate()
     except:
-        logging.error('Exception when running software inventory subprocess')
+        logging.error('Exception when running tiptorrent client GET subprocess')
         raise ValueError('Error: Incorrect command value')
     finally:
-        logging.debug(f'tip_client_get out: {out}')
-        logging.debug(f'tip_client_get err: {err}')
         logfile.close()
 
     if proc.returncode != 0:

@@ -3,6 +3,7 @@ import logging
 import os
 import subprocess
 import shlex
+import shutil
 
 from subprocess import PIPE
 
@@ -54,6 +55,51 @@ def ogChangeRepo(ip):
 
     return subprocess.run(f'ogChangeRepo {ipaddr}',
                           shell=True)
+
+
+def restoreImageCustom(repo_ip, image_name, disk, partition, method):
+    """
+    """
+    if not shutil.which('restoreImageCustom'):
+        logging.error('Invalid restoreImageCustom invocation')
+        raise ValueError('Error: restoreImageCustom not found')
+
+    if ogChangeRepo(repo).returncode != 0:
+        logging.error('ogChangeRepo could not change repository to %s', repo)
+        raise ValueError(f'Error: Cannot change repository to {repo}')
+
+    cmd = f'restoreImageCustom {repo_ip} {image_name} {disk} {partition} {method}'
+    with open('/tmp/command.log', 'wb', 0) as logfile:
+        try:
+            proc = subprocess.run(cmd,
+                                  stdout=logfile,
+                                  encoding='utf-8',
+                                  shell=True)
+        except:
+            logging.error('Exception when running restoreImageCustom subprocess')
+            raise ValueError('Error: Incorrect command value')
+    return proc.returncode
+
+
+def configureOs(disk, partition):
+    """
+    """
+    if shutil.which('configureOsCustom'):
+        cmd_configure = f"configureOsCustom {disk} {partition}"
+    else:
+        cmd_configure = f"configureOs {disk} {partition}"
+
+    try:
+        proc = subprocess.run(cmd_configure,
+                              stdout=PIPE,
+                              encoding='utf-8',
+                              shell=True)
+        out = proc.stdout
+    except:
+        logging.error('Exception when running configureOs subprocess')
+        raise ValueError('Error: Incorrect command value')
+
+    return out
 
 
 def ogCopyEfiBootLoader(disk, partition):

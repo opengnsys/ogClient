@@ -11,6 +11,7 @@ import logging
 import os
 import subprocess
 import shlex
+import shutil
 
 from subprocess import Popen, PIPE
 
@@ -25,8 +26,9 @@ from src.utils.net import ethtool
 from src.utils.menu import generate_menu
 from src.utils.fs import *
 from src.utils.probe import os_probe, cache_probe
-from src.utils.disk import get_disks
+from src.utils.disk import *
 from src.utils.cache import generate_cache_txt
+from src.utils.tiptorrent import *
 
 
 OG_SHELL = '/bin/bash'
@@ -116,6 +118,36 @@ class OgLiveOperations:
         dig = self._compute_md5(path)
         with open(filename, 'w') as f:
             f.write(dig)
+
+    def _restore_image_unicast(self, repo, name, devpath):
+        image_path = f'/opt/opengnsys/images/{name}.img'
+        if ogChangeRepo(repo).returncode != 0:
+            logging.error('ogChangeRepo could not change repository to %s', repo)
+            raise ValueError(f'Error: Cannot change repository to {repo}')
+        self._restore_image(image_path, devpath)
+
+    def _restore_image_tiptorrent(self, repo, name, devpath):
+        image_path = f'/opt/opengnsys/cache/opt/opengnsys/images/{name}.img'
+        if (not os.path.exists(image_path) or
+            not tip_check_csum(repo, name)):
+            tip_client_get(repo, name)
+        self._restore_image(image_path, devpath)
+
+    def _restore_image(self, image_path, devpath):
+        cmd_lzop = shlex.split('lzop -dc -')
+        cmd_pc = shlex.split(f'partclone.restore -d0 -C -I -o {devpath}')
+        cmd_mbuffer = shlex.split('mbuffer -q -m 40M') if shutil.which('mbuffer') else None
+
+        with open(image_path, 'rb') as imgfile, \
+             open('/tmp/command.log', 'wb', 0) as logfile:
+            proc_lzop = subprocess.Popen(cmd_lzop,
+                                         stdout=subprocess.PIPE,
+                                         stdin=imgfile)
+            proc_pc = subprocess.Popen(cmd_pc,
+                                       stdin=proc_lzop.stdout,
+                                       stderr=logfile)
+            proc_lzop.stdout.close()
+            proc_pc.communicate()
 
     def poweroff(self):
         logging.info('Powering off client')
@@ -265,27 +297,30 @@ class OgLiveOperations:
         ctype = request.getType()
         profile = request.getProfile()
         cid = request.getId()
-        cmd = f'{ogClient.OG_PATH}interfaceAdm/RestaurarImagen {disk} {partition} ' \
-              f'{name} {repo} {ctype}'
+
+        partdev = get_partition_device(int(disk), int(partition))
 
         self._restartBrowser(self._url_log)
 
-        try:
-            ogRest.proc = subprocess.Popen([cmd],
-                               stdout=subprocess.PIPE,
-                               shell=True,
-                               executable=OG_SHELL)
-            (output, error) = ogRest.proc.communicate()
-            if (ogRest.proc.returncode):
-                raise Exception
-        except:
-            logging.error('Exception when running image restore subprocess')
-            raise ValueError('Error: Incorrect command value')
+        logging.debug('Image restore params:')
+        logging.debug(f'\tname: {name}')
+        logging.debug(f'\trepo: {repo}')
+        logging.debug(f'\tprofile: {profile}')
+        logging.debug(f'\tctype: {ctype}')
+
+        if shutil.which('restoreImageCustom'):
+            restoreImageCustom(repo, name, disk, partition, ctype)
+        elif 'UNICAST' in ctype:
+            self._restore_image_unicast(repo, name, partdev)
+        elif ctype == 'TIPTORRENT':
+            self._restore_image_tiptorrent(repo, name, partdev)
+
+        output = configureOs(disk, partition)
 
         self.refresh(ogRest)
 
         logging.info('Image restore command OK')
-        return output.decode('utf-8')
+        return output
 
     def image_create(self, path, request, ogRest):
         disk = int(request.getDisk())
