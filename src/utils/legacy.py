@@ -53,3 +53,13 @@ def ogChangeRepo(ip):
 
     return subprocess.run(f'ogChangeRepo {ipaddr}',
                           shell=True)
+
+
+def ogCopyEfiBootloader(disk, partition):
+    cmd = f'ogCopyEfiBootloader {disk} {partition]'
+    try:
+        proc = subprocess.run(cmd,
+                              shell=True)
+    except:
+        logging.error('Exception when running ogCopyEfiBootloader')
+        raise ValueError('Subprocess error: ogCopyEfiBootloader')
