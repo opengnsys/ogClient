@@ -82,21 +82,21 @@ def ogReduceFs(disk, part):
     Bash function 'ogReduceFs' wrapper
     """
     proc = subprocess.run(f'ogReduceFs {disk} {part}',
-                          shell=True, stdout=PIPE)
-
-    if proc.returncode == 0:
-        subprocess.run(f'ogUnmount {disk} {part}',
-                       shell=True, stdout=PIPE)
-        return proc.stdout.decode().replace('\n', '')
-
-    logging.warn(f'ogReduceFS exited with code {proc.returncode}')
-    return None
+                          shell=True, stdout=PIPE,
+                          encoding='utf-8')
+    if proc.returncode != 0:
+        logging.warn(f'ogReduceFS exited with non zero code: {proc.returncode}')
+    subprocess.run(f'ogUnmount {disk} {part}',
+                   shell=True)
 
 
 def ogExtendFs(disk, part):
     """
     Bash function 'ogExtendFs' wrapper
     """
+    subprocess.run(f'ogMount {disk} {part}',
+                   shell=True)
     proc = subprocess.run(f'ogExtendFs {disk} {part}',
                           shell=True)
-    return proc.returncode
+    if proc.returncode != 0:
+        logging.warn(f'ogExtendFs exited with non zero code: {proc.returncode}')

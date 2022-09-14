@@ -359,8 +359,7 @@ class OgLiveOperations:
             logging.info(f'partclone process exited with code {p1.returncode}')
             logging.info(f'lzop process exited with code {p2.returncode}')
 
-            if ogExtendFs(disk, partition) != 0:
-                logging.warn('Error extending filesystem after image creation')
+            ogExtendFs(disk, partition)
 
             image_info = ogGetImageInfo(image_path)
         except:
