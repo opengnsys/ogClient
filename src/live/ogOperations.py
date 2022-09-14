@@ -335,7 +335,7 @@ class OgLiveOperations:
                     raise ValueError('Target partition has no filesystem present')
 
             cambiar_acceso(user=self._smb_user, pwd=self._smb_pass)
-            ogCopyEfiBootloader(disk, partition)
+            ogCopyEfiBootLoader(disk, partition)
             ogReduceFs(disk, partition)
 
             cmd1 = shlex.split(f'partclone.{fstype} -I -C --clone -s {padev} -O -')

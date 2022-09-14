@@ -1,4 +1,5 @@
 import ipaddress
+import logging
 import os
 import subprocess
 import shlex
@@ -55,11 +56,11 @@ def ogChangeRepo(ip):
                           shell=True)
 
 
-def ogCopyEfiBootloader(disk, partition):
-    cmd = f'ogCopyEfiBootloader {disk} {partition]'
+def ogCopyEfiBootLoader(disk, partition):
+    cmd = f'ogCopyEfiBootLoader {disk} {partition}'
     try:
         proc = subprocess.run(cmd,
                               shell=True)
     except:
-        logging.error('Exception when running ogCopyEfiBootloader')
+        logging.error('Exception when running ogCopyEfiBootLoader subprocess')
         raise ValueError('Subprocess error: ogCopyEfiBootloader')
