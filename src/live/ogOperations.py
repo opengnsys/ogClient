@@ -134,15 +134,13 @@ class OgLiveOperations:
         self._restore_image(image_path, devpath)
 
     def _restore_image(self, image_path, devpath):
-        cmd_lzop = shlex.split('lzop -dc -')
+        cmd_lzop = shlex.split(f'lzop -dc {image_path}')
         cmd_pc = shlex.split(f'partclone.restore -d0 -C -I -o {devpath}')
         cmd_mbuffer = shlex.split('mbuffer -q -m 40M') if shutil.which('mbuffer') else None
 
-        with open(image_path, 'rb') as imgfile, \
-             open('/tmp/command.log', 'wb', 0) as logfile:
+        with open('/tmp/command.log', 'wb', 0) as logfile:
             proc_lzop = subprocess.Popen(cmd_lzop,
-                                         stdout=subprocess.PIPE,
-                                         stdin=imgfile)
+                                         stdout=subprocess.PIPE)
             proc_pc = subprocess.Popen(cmd_pc,
                                        stdin=proc_lzop.stdout,
                                        stderr=logfile)
