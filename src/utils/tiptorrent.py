@@ -61,9 +61,6 @@ def tip_check_csum(tip_addr, image_name):
 
 def tip_client_get(tip_addr, image_name):
     """
-    tiptorrent-client wrapper
-
-    TODO: Check if CACHE partition is present
     """
     logging.info(f'Fetching image {image_name} from tiptorrent server at {tip_addr}')
     cmd = f'tiptorrent-client {tip_addr} {image_name}.img'
@@ -76,12 +73,13 @@ def tip_client_get(tip_addr, image_name):
         proc.communicate()
     except:
         logging.error('Exception when running tiptorrent client GET subprocess')
-        raise ValueError('Error: Incorrect command value')
+        raise ValueError('Unexpected error running tiptorrent subprocess')
     finally:
         logfile.close()
 
     if proc.returncode != 0:
         logging.error(f'Error fetching image {image_name} via tiptorrent')
+        raise ValueError('Tiptorrent download failed')
     else:
         logging.info('tiptorrent transfer completed, writing checksum')
         tip_write_csum(image_name)
