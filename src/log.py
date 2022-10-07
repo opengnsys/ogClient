@@ -37,11 +37,6 @@ def _default_logging_linux():
                 'formatter': 'formatter.syslog',
                 'address': '/dev/log',
             },
-            'samba': {
-                'class': 'logging.FileHandler',
-                'formatter': 'formatter.syslogtime',
-                'filename': f'/opt/opengnsys/log/{getifaddr(os.getenv("DEVICE"))}.log',
-            },
         },
         'loggers': {
             '': {
@@ -50,6 +45,21 @@ def _default_logging_linux():
             },
         }
     }
+    return logconfig
+
+
+def _default_logging_live():
+    from src.utils.net import getifaddr
+    logconfig = _default_logging_linux()
+    samba = {
+            'samba': {
+                'class': 'logging.FileHandler',
+                'formatter': 'formatter.syslogtime',
+                'filename': f'/opt/opengnsys/log/{getifaddr(os.getenv("DEVICE"))}.log',
+            }
+        }
+    logconfig['handlers'].update(samba)
+    logconfig['loggers']['']['handlers'].append('samba')
     return logconfig
 
 
@@ -93,11 +103,12 @@ def configure_logging(mode, level):
     """
     if mode == 'windows':
         logconfig = _default_logging_win()
-    else:
+    elif mode == 'linux':
         logconfig = _default_logging_linux()
-
-    if mode == 'live':
-        logconfig['loggers']['']['handlers'].append('samba')
+    elif mode == 'live':
+        logconfig = _default_logging_live()
+    else:
+        raise ValueError(f'Error: Mode {mode} not supported')
 
     logconfig['loggers']['']['level'] = level
 
