@@ -119,11 +119,34 @@ class OgLiveOperations:
         with open(filename, 'w') as f:
             f.write(dig)
 
-    def _restore_image_unicast(self, repo, name, devpath):
-        image_path = f'/opt/opengnsys/images/{name}.img'
+    def _copy_image_to_cache(self, image_name):
+        """
+        Copies /opt/opengnsys/image/{image_name} into
+        /opt/opengnsys/cache/opt/opengnsys/images/
+
+        Implies a unicast transfer. Does not use tiptorrent.
+        """
+        src = f'/opt/opengnsys/images/{image_name}.img'
+        dst = f'/opt/opengnsys/cache/opt/opengnsys/images/{image_name}.img'
+        try:
+            r = shutil.copy(src, dst)
+            tip_write_csum(image_name)
+        except:
+            logging.error('Error copying image to cache', repo)
+            raise ValueError(f'Error: Cannot copy image {image_name} to cache')
+
+    def _restore_image_unicast(self, repo, name, devpath, cache=False):
         if ogChangeRepo(repo).returncode != 0:
             logging.error('ogChangeRepo could not change repository to %s', repo)
             raise ValueError(f'Error: Cannot change repository to {repo}')
+        logging.debug(f'restore_image_unicast: name => {name}')
+        if cache:
+            image_path = f'/opt/opengnsys/cache/opt/opengnsys/images/{name}.img'
+            if (not os.path.exists(image_path) or
+                not tip_check_csum(repo, name)):
+                self._copy_image_to_cache(name)
+        else:
+            image_path = f'/opt/opengnsys/images/{name}.img'
         self._restore_image(image_path, devpath)
 
     def _restore_image_tiptorrent(self, repo, name, devpath):
@@ -134,9 +157,14 @@ class OgLiveOperations:
         self._restore_image(image_path, devpath)
 
     def _restore_image(self, image_path, devpath):
+        logging.debug(f'Restoring image at {image_path} into {devpath}')
         cmd_lzop = shlex.split(f'lzop -dc {image_path}')
         cmd_pc = shlex.split(f'partclone.restore -d0 -C -I -o {devpath}')
         cmd_mbuffer = shlex.split('mbuffer -q -m 40M') if shutil.which('mbuffer') else None
+
+        if not os.path.exists(image_path):
+            logging.error('f{image_path} does not exist, exiting.')
+            raise ValueError(f'Error: Image not found at {image_path}')
 
         with open('/tmp/command.log', 'wb', 0) as logfile:
             proc_lzop = subprocess.Popen(cmd_lzop,
@@ -309,7 +337,8 @@ class OgLiveOperations:
         if shutil.which('restoreImageCustom'):
             restoreImageCustom(repo, name, disk, partition, ctype)
         elif 'UNICAST' in ctype:
-            self._restore_image_unicast(repo, name, partdev)
+            cache = 'DIRECT' not in ctype
+            self._restore_image_unicast(repo, name, partdev, cache)
         elif ctype == 'TIPTORRENT':
             self._restore_image_tiptorrent(repo, name, partdev)
 
