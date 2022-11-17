@@ -45,6 +45,7 @@ class OgLiveOperations:
             proc = subprocess.call(["pkill", "-9", "browser"])
             proc = subprocess.Popen(["browser", "-qws", url])
         except:
+            logging.error('Cannot restart browser')
             raise ValueError('Error: cannot restart browser')
 
     def _refresh_payload_disk(self, cxt, part_setup, num_disk):
@@ -137,6 +138,7 @@ class OgLiveOperations:
 
     def _restore_image_unicast(self, repo, name, devpath, cache=False):
         if ogChangeRepo(repo).returncode != 0:
+            self._restartBrowser(self._url)
             logging.error('ogChangeRepo could not change repository to %s', repo)
             raise ValueError(f'Error: Cannot change repository to {repo}')
         logging.debug(f'restore_image_unicast: name => {name}')
@@ -151,9 +153,13 @@ class OgLiveOperations:
 
     def _restore_image_tiptorrent(self, repo, name, devpath):
         image_path = f'/opt/opengnsys/cache/opt/opengnsys/images/{name}.img'
-        if (not os.path.exists(image_path) or
-            not tip_check_csum(repo, name)):
-            tip_client_get(repo, name)
+        try:
+            if (not os.path.exists(image_path) or
+                not tip_check_csum(repo, name)):
+                tip_client_get(repo, name)
+        except:
+            self._restartBrowser(self._url)
+            raise ValueError('Error before restoring image')
         self._restore_image(image_path, devpath)
 
     def _restore_image(self, image_path, devpath):
@@ -361,6 +367,7 @@ class OgLiveOperations:
         self._restartBrowser(self._url_log)
 
         if ogChangeRepo(repo).returncode != 0:
+            self._restartBrowser(self._url)
             logging.error('ogChangeRepo could not change repository to %s', repo)
             raise ValueError(f'Error: Cannot change repository to {repo}')
 
@@ -371,6 +378,7 @@ class OgLiveOperations:
                                executable=OG_SHELL)
             (output, error) = ogRest.proc.communicate()
         except:
+            self._restartBrowser(self._url)
             logging.error('Exception when running software inventory subprocess')
             raise ValueError('Error: Incorrect command value')
 
@@ -387,6 +395,7 @@ class OgLiveOperations:
                     pa = cxt.partitions[i]
 
             if pa is None:
+                self._restartBrowser(self._url)
                 logging.error('Target partition not found')
                 raise ValueError('Target partition number not found')
 
@@ -425,6 +434,7 @@ class OgLiveOperations:
 
             image_info = ogGetImageInfo(image_path)
         except:
+            self._restartBrowser(self._url)
             logging.error('Exception when running "image create" subprocess')
             raise ValueError('Error: Incorrect command value')
 

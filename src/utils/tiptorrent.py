@@ -21,8 +21,15 @@ def tip_fetch_csum(tip_addr, image_name):
     """
     """
     url = f'http://{tip_addr}:9999/{image_name}.img.full.sum'
-    with urllib.request.urlopen(f'{url}') as resp:
-        r = resp.readline().rstrip().decode('utf-8')
+    try:
+        with urllib.request.urlopen(f'{url}') as resp:
+            r = resp.readline().rstrip().decode('utf-8')
+    except urllib.error.URLError as e:
+        logging.warning('URL error when fetching checksum: {e.reason}')
+        raise e
+    except urllib.error.HTTPError as e:
+        logging.warning(f'HTTP Error when fetching checksum: {e.reason}')
+        raise e
     return r
 
 
