@@ -181,6 +181,12 @@ class OgLiveOperations:
             proc_lzop.stdout.close()
             proc_pc.communicate()
 
+    def _ogbrowser_clear_logs(self):
+        logfiles = ['/tmp/command.log', '/tmp/session.log']
+        for logfile in logfiles:
+            with open(logfile, 'wb', 0) as f:
+                f.truncate(0)
+
     def poweroff(self):
         logging.info('Powering off client')
         if os.path.exists('/scripts/oginit'):
@@ -329,9 +335,9 @@ class OgLiveOperations:
         ctype = request.getType()
         profile = request.getProfile()
         cid = request.getId()
-
         partdev = get_partition_device(int(disk), int(partition))
 
+        self._ogbrowser_clear_logs()
         self._restartBrowser(self._url_log)
 
         logging.debug('Image restore params:')
