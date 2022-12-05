@@ -58,8 +58,17 @@ def _default_logging_live():
                 'filename': f'/opt/opengnsys/log/{getifaddr(os.getenv("DEVICE"))}.log',
             }
         }
+    rtlog = {
+            'rtlog': {
+                'class': 'logging.FileHandler',
+                'formatter': 'formatter.syslogtime',
+                'filename': f'/tmp/session.log',
+            }
+        }
     logconfig['handlers'].update(samba)
+    logconfig['handlers'].update(rtlog)
     logconfig['loggers']['']['handlers'].append('samba')
+    logconfig['loggers']['']['handlers'].append('rtlog')
     return logconfig
 
 
