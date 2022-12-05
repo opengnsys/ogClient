@@ -370,6 +370,7 @@ class OgLiveOperations:
                    f'{partition} {path}'
         image_path = f'/opt/opengnsys/images/{name}.img'
 
+        self._ogbrowser_clear_logs()
         self._restartBrowser(self._url_log)
 
         if ogChangeRepo(repo).returncode != 0:
