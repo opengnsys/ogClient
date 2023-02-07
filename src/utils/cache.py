@@ -68,3 +68,15 @@ def generate_cache_txt():
             return
         content = ','.join(files)
         write_cache_txt(content)
+
+
+def init_cache():
+    """
+    If a cache partition is present, creates the following directories
+    /opt/opengnsys/images. This is the default folder in which images
+    are stored when using tiptorrent-cache.
+    """
+    mountpoint = mount_cache()
+    if mountpoint:
+        logging.debug(f'Creating cache directory at {mountpoint}')
+        os.makedirs('/opt/opengnsys/cache/opt/opengnsys/images')
