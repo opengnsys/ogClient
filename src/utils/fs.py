@@ -9,10 +9,13 @@
 import logging
 import os
 import subprocess
+import shlex
 
-from subprocess import DEVNULL, PIPE
+from subprocess import DEVNULL, PIPE, STDOUT
 
 import psutil
+
+from src.utils.disk import get_partition_device
 
 
 def find_mountpoint(path):
@@ -100,3 +103,65 @@ def ogExtendFs(disk, part):
                           shell=True)
     if proc.returncode != 0:
         logging.warn(f'ogExtendFs exited with non zero code: {proc.returncode}')
+
+
+def mkfs(fs, disk, partition, label=None):
+    """
+    Install any supported filesystem. Target partition is specified a disk
+    number and partition number. This function uses utility functions to
+    translate disk and partition number into a partition device path.
+
+    If filesystem and partition are correct, calls the corresponding mkfs_*
+    function with the partition device path. If not, ValueError is raised.
+    """
+    logging.debug(f'mkfs({fs}, {disk}, {partition}, {label})')
+    fsdict = {
+        'ext4': mkfs_ext4,
+        'ntfs': mkfs_ntfs,
+        'fat32': mkfs_fat32,
+    }
+
+    if fs not in fsdict:
+        logging.warn(f'mkfs aborted, invalid target filesystem.')
+        raise ValueError('Invalid target filesystem')
+
+    try:
+        partdev = get_partition_device(disk, partition)
+    except ValueError as e:
+        logging.warn(f'mkfs aborted, invalid partition.')
+        raise e
+
+    fsdict[fs](partdev, label)
+
+
+def mkfs_ext4(partdev, label=None):
+    if label:
+        cmd = shlex.split(f'mkfs.ext4 -L {label} -F {partdev}')
+    else:
+        cmd = shlex.split(f'mkfs.ext4 -F {partdev}')
+    with open('/tmp/command.log', 'wb', 0) as logfile:
+        subprocess.run(cmd,
+                       stdout=logfile,
+                       stderr=STDOUT)
+
+
+def mkfs_ntfs(partdev, label=None):
+    if label:
+        cmd = shlex.split(f'mkfs.ntfs -f -L {label} {partdev}')
+    else:
+        cmd = shlex.split(f'mkfs.ntfs -f {partdev}')
+    with open('/tmp/command.log', 'wb', 0) as logfile:
+        subprocess.run(cmd,
+                       stdout=logfile,
+                       stderr=STDOUT)
+
+
+def mkfs_fat32(partdev, label=None):
+    if label:
+        cmd = shlex.split(f'mkfs.vfat -n {label} -F32 {partdev}')
+    else:
+        cmd = shlex.split(f'mkfs.vfat -F32 {partdev}')
+    with open('/tmp/command.log', 'wb', 0) as logfile:
+        subprocess.run(cmd,
+                       stdout=logfile,
+                       stderr=STDOUT)
