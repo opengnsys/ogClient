@@ -20,6 +20,7 @@ import fdisk
 from src.ogClient import ogClient
 from src.ogRest import ThreadState
 from src.live.partcodes import GUID_MAP
+from src.live.parttypes import get_parttype
 
 from src.utils.legacy import *
 from src.utils.net import ethtool
@@ -27,7 +28,7 @@ from src.utils.menu import generate_menu
 from src.utils.fs import *
 from src.utils.probe import os_probe, cache_probe
 from src.utils.disk import *
-from src.utils.cache import generate_cache_txt
+from src.utils.cache import generate_cache_txt, umount_cache, init_cache
 from src.utils.tiptorrent import *
 
 
@@ -301,29 +302,56 @@ class OgLiveOperations:
         cache = request.getCache()
         cache_size = request.getCacheSize()
         partlist = request.getPartitionSetup()
-        cfg = f'dis={disk}*che={cache}*tch={cache_size}!'
+
+        self._ogbrowser_clear_logs()
+        self._restartBrowser(self._url_log)
+
+        diskname = get_disks()[int(disk)-1]
+        cxt = fdisk.Context(f'/dev/{diskname}',
+                            details=True)
+
+        if table_type == 'MSDOS':
+            cxt.create_disklabel('dos')
+        elif table_type == 'GPT':
+            cxt.create_disklabel('gpt')
 
         for part in partlist:
-            cfg += f'par={part["partition"]}*cpt={part["code"]}*' \
-                   f'sfi={part["filesystem"]}*tam={part["size"]}*' \
-                   f'ope={part["format"]}%'
-
+            logging.debug(f'Adding partition: {part}')
+            if part["code"] == 'EMPTY':
+                continue
             if ogRest.terminated:
                 break
+            if part["code"] == 'CACHE':
+                umount_cache()
 
-        cmd = f'{ogClient.OG_PATH}interfaceAdm/Configurar {table_type} {cfg}'
-        try:
-            ogRest.proc = subprocess.Popen([cmd],
-                               stdout=subprocess.PIPE,
-                               shell=True,
-                               executable=OG_SHELL)
-            (output, error) = ogRest.proc.communicate()
-        except:
-            logging.error('Exception when running setup subprocess')
-            raise ValueError('Error: Incorrect command value')
+            pa = fdisk.Partition(start_follow_default=True,
+                                 end_follow_default=False,
+                                 partno_follow_default=False)
+            parttype = get_parttype(cxt, part["code"])
+            size = int(part["size"])
+            pa.size = (size * (1 << 10)) // cxt.sector_size
+            pa.partno = int(part["partition"]) - 1
+            pa.type = parttype
+            cxt.add_partition(pa)
+
+        cxt.write_disklabel()
+        subprocess.run('partprobe')
+
+        for part in partlist:
+            if part["filesystem"] == 'EMPTY':
+                continue
+            partition = int(part["partition"])
+            fs = part["filesystem"].lower()
+            if fs == 'cache':
+                mkfs('ext4', int(disk), partition, label='CACHE')
+                init_cache()
+            else:
+                mkfs(fs, int(disk), partition)
 
         logging.info('Setup command OK')
         result = self.refresh(ogRest)
+
+        self._restartBrowser(self._url)
 
         return result
 
